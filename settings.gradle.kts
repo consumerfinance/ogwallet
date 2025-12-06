@@ -33,3 +33,6 @@ plugins {
 }
 
 include(":composeApp")
+
+include(":ogwallet-data")
+project(":ogwallet-data").projectDir = file("shared/ogwallet-data")
