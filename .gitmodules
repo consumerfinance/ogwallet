@@ -1,0 +1,3 @@
+[submodule "shared/ogwallet-data"]
+	path = shared/ogwallet-data
+	url = https://github.com/consumerfinance/ogwallet-data.git
