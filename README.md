@@ -2,6 +2,10 @@
 
 only wallet you need
 
+## Design
+
+https://coyote-citron-86828390.figma.site
+
 ### Build and Run Android Application
 
 To build and run the development version of the Android app, use the run configuration from the run widget
