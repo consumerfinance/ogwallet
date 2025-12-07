@@ -1,4 +1,4 @@
-package dev.consumerfinance.walllet
+package dev.consumerfinance.ogwalllet
 
 import androidx.compose.ui.window.ComposeUIViewController
 
