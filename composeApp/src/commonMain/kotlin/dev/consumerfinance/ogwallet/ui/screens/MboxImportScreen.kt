@@ -189,7 +189,7 @@ fun MboxImportScreen(onBack: () -> Unit) {
                         ) {
                             Text("Total amount:")
                             Text(
-                                "$${String.format("%.2f", result.totalAmount)}",
+                                "$${result.totalAmount}",
                                 fontWeight = FontWeight.Bold
                             )
                         }

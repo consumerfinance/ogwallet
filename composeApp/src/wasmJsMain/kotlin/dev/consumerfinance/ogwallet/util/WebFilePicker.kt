@@ -25,18 +25,22 @@ object WebFilePicker {
         input.onchange = { event ->
             val files = input.files
             if (files != null && files.length > 0) {
-                val file = files[0] as File
-                
-                // Read the file content
-                val reader = FileReader()
-                reader.onload = { loadEvent ->
-                    val content = reader.result as String
-                    continuation.resume(content)
-                }
-                reader.onerror = {
+                val file = files.item(0)
+
+                if (file != null) {
+                    // Read the file content
+                    val reader = FileReader()
+                    reader.onload = { loadEvent ->
+                        val content = reader.result as String
+                        continuation.resume(content)
+                    }
+                    reader.onerror = {
+                        continuation.resume(null)
+                    }
+                    reader.readAsText(file)
+                } else {
                     continuation.resume(null)
                 }
-                reader.readAsText(file)
             } else {
                 continuation.resume(null)
             }

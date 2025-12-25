@@ -183,7 +183,7 @@ private fun ImportScreenContent(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
-                    Text("Total Amount: ₹${String.format("%.2f", result.totalAmount)}")
+                    Text("Total Amount: ₹${result.totalAmount}")
                 }
             }
         }

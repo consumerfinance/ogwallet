@@ -33,11 +33,12 @@ fun LockScreen(dbManager: DatabaseManager) {
 
     val platform = getPlatform()
     val isDesktop = platform.name.contains("Java")
+    val isWeb = platform.name.contains("Web") || platform.name.contains("Wasm")
 
     // Automatically trigger authentication when the screen appears
     LaunchedEffect(Unit) {
-        if (isDesktop) {
-            // For desktop, check if we need PIN setup or entry
+        if (isDesktop || isWeb) {
+            // For desktop and web, check if we need PIN setup or entry
             authenticateDesktop(biometricAuth, dbManager, scope,
                 onPINSetupRequired = { authState = AuthState.PIN_SETUP_REQUIRED },
                 onPINEntryRequired = { authState = AuthState.PIN_ENTRY_REQUIRED },
