@@ -1,0 +1,19 @@
+{
+  "id": "offer-003",
+  "title": "10% Back at Amazon",
+  "description": "Limited time offer for Prime members",
+  "card_name": "Amazon Prime Rewards",
+  "bank_name": "Chase",
+  "category": "shopping",
+  "expiry_date": "2024-12-15",
+  "emoji": "\ud83d\udce6",
+  "gradient_colors": [
+    "#8b5cf6",
+    "#ec4899"
+  ],
+  "is_active": true,
+  "min_spend": 50.0,
+  "max_benefit": 200.0,
+  "upvotes": 92,
+  "downvotes": 5
+}

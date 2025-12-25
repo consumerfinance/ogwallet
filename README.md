@@ -1,4 +1,41 @@
+# OGWallet
+
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
+
+## 🆕 Credit Card Data System
+
+OGWallet now includes a complete system for crowdsourcing and displaying credit card offers and benefits!
+
+### Features
+- 📝 **Microsoft Forms Integration** - Collect offers from the community
+- 🐍 **Python Processing Server** - Validate and process submissions
+- 📦 **Git-based Data Storage** - Version-controlled JSON data
+- 🎨 **Beautiful UI** - Display offers with gradients and emojis
+- 🔄 **Automated Updates** - GitHub Actions for scheduled processing
+
+### Quick Start
+
+1. **Set up sample data:**
+   ```bash
+   cd data-server
+   python3 test_setup.py
+   ```
+
+2. **Run the app:**
+   ```bash
+   ./gradlew :composeApp:run
+   ```
+
+3. **View offers:**
+   Navigate to the "Offers & Rewards" screen to see credit card offers!
+
+### Documentation
+- 📖 [Complete Setup Guide](CREDIT_CARD_DATA_SETUP.md)
+- 🚀 [Quick Start](data-server/SUMMARY.md)
+- 📝 [Microsoft Forms Template](data-server/MICROSOFT_FORMS_TEMPLATE.md)
+- 🔧 [Server Documentation](data-server/README.md)
+
+---
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:

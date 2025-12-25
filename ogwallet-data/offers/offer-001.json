@@ -1,0 +1,17 @@
+{
+  "id": "offer-001",
+  "title": "5x Points on Dining",
+  "description": "Earn 5 points per dollar spent at restaurants and food delivery",
+  "card_name": "Chase Sapphire Preferred",
+  "bank_name": "Chase",
+  "category": "dining",
+  "expiry_date": "2024-12-31",
+  "emoji": "\ud83c\udf7d\ufe0f",
+  "gradient_colors": [
+    "#f97316",
+    "#ef4444"
+  ],
+  "is_active": true,
+  "upvotes": 45,
+  "downvotes": 2
+}

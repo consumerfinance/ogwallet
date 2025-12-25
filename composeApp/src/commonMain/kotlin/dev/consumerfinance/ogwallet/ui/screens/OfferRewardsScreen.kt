@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import dev.consumerfinance.ogwallet.data.CreditCardDataLoader
 
 data class RewardsBalance(
     val points: Int,
@@ -51,9 +52,20 @@ data class CategoryEarning(
     val color: Color
 )
 
+/**
+ * Convert hex color string to Compose Color
+ */
+fun hexToColor(hex: String): Color {
+    val cleanHex = hex.removePrefix("#")
+    return Color(("FF" + cleanHex).toLong(16))
+}
+
 @Preview
 @Composable
 fun OffersRewardsScreen() {
+    // Load credit card data from git submodule
+    val creditCardData = remember { CreditCardDataLoader.loadData() }
+
     val rewardsBalance = RewardsBalance(
         points = 24582,
         cashBack = 245.82,
@@ -61,30 +73,31 @@ fun OffersRewardsScreen() {
         expiryDate = "Dec 31"
     )
 
-    val activeOffers = listOf(
-        Offer(
-            "1", "5x Points on Dining", "Earn 5 points per dollar at restaurants",
-            "Dec 31", "Dining", "🍽️",
-            listOf(Color(0xFFf97316), Color(0xFFef4444))
-        ),
-        Offer(
-            "2", "3% Cash Back on Gas", "Get 3% back on all gas purchases",
-            "Dec 20", "Gas", "⛽",
-            listOf(Color(0xFF3b82f6), Color(0xFF06b6d4))
-        ),
-        Offer(
-            "3", "10% Back at Amazon", "Limited time for Prime members",
-            "Dec 15", "Shopping", "📦",
-            listOf(Color(0xFF8b5cf6), Color(0xFFec4899))
-        )
-    )
+    // Convert loaded data to UI models
+    val activeOffers = creditCardData.offers
+        .filter { it.isActive }
+        .map { offerData ->
+            Offer(
+                id = offerData.id,
+                title = offerData.title,
+                description = offerData.description,
+                expiry = offerData.expiryDate ?: "No expiry",
+                category = offerData.category.replaceFirstChar { it.uppercase() },
+                emoji = offerData.emoji,
+                gradient = offerData.gradientColors.map { hexToColor(it) }
+            )
+        }
 
-    val redeemOptions = listOf(
-        RedemptionOption("1", "Cash Back", "1 point = $0.01", 2500, "💵", true),
-        RedemptionOption("2", "Travel Rewards", "1 point = $0.015", 5000, "✈️", true),
-        RedemptionOption("3", "Gift Cards", "1 point = $0.012", 2500, "🎁", true),
-        RedemptionOption("4", "Statement Credit", "1 point = $0.01", 2500, "💳", true)
-    )
+    val redeemOptions = creditCardData.redemptionOptions.map { redemptionData ->
+        RedemptionOption(
+            id = redemptionData.id,
+            name = redemptionData.name,
+            rate = redemptionData.rate,
+            minimum = redemptionData.minimumPoints,
+            emoji = redemptionData.emoji,
+            available = redemptionData.available
+        )
+    }
 
     val categoryEarnings = listOf(
         CategoryEarning("Dining", 8234, 33, Color(0xFFf97316)),
