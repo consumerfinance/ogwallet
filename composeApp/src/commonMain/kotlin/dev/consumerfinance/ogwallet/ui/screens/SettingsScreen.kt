@@ -19,17 +19,17 @@ import dev.consumerfinance.ogwallet.getPlatform
 fun SettingsScreen() {
     var showSmsScanner by remember { mutableStateOf(false) }
     var showMboxImport by remember { mutableStateOf(false) }
-    
+
     // Check if we're on Android
     val platform = getPlatform()
     val isAndroid = platform.name.contains("Android")
-    
+
     when {
         showSmsScanner && isAndroid -> {
             SmsScannerScreenWrapper(onBack = { showSmsScanner = false })
         }
         showMboxImport -> {
-            ImportScreen()
+            MboxImportScreen(onBack = { showMboxImport = false })
         }
         else -> {
             SettingsScreenContent(
