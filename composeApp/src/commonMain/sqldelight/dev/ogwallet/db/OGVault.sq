@@ -1,0 +1,162 @@
+import dev.consumerfinance.ogwallet.models.ThemeMode;
+import dev.consumerfinance.ogwallet.models.AlertPriority;
+import dev.consumerfinance.ogwallet.models.AlertType;
+import dev.consumerfinance.ogwallet.models.AuditEventType;
+import kotlin.Boolean;
+
+-- 1. Card Milestones (The "Goals")
+CREATE TABLE card_milestone (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_name TEXT NOT NULL,
+    spend_goal REAL NOT NULL,
+    deadline_timestamp INTEGER NOT NULL,
+    is_completed INTEGER AS Boolean DEFAULT 0,
+    primary_color_hex TEXT DEFAULT '#000000'
+);
+
+-- 2. Transaction Ledger
+CREATE TABLE transaction_entity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    amount REAL NOT NULL,
+    currency_code TEXT DEFAULT 'USD',
+    merchant_raw TEXT NOT NULL,
+    merchant_clean TEXT,
+    category TEXT NOT NULL,
+    card_handle TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    is_pending INTEGER AS Boolean DEFAULT 0
+);
+
+-- 3. SMS Templates (Regex patterns for different banks)
+CREATE TABLE sms_template (
+    id TEXT PRIMARY KEY,
+    bank_name TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    regex_pattern TEXT NOT NULL,
+    is_active INTEGER AS Boolean DEFAULT 1
+);
+
+-- 4. Merchant Aliases (Normalization Logic)
+CREATE TABLE merchant_alias (
+    raw_match TEXT PRIMARY KEY,
+    clean_name TEXT NOT NULL,
+    category_default TEXT NOT NULL,
+    icon_path TEXT
+);
+
+-- 5. Audit Log (Security & System Events)
+CREATE TABLE audit_log (
+    id TEXT PRIMARY KEY,
+    timestamp INTEGER NOT NULL,
+    event_type TEXT AS AuditEventType NOT NULL,
+    message TEXT NOT NULL
+);
+
+-- 6. Spending Alerts
+CREATE TABLE spending_alert (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    alert_type TEXT AS AlertType NOT NULL,
+    priority TEXT AS AlertPriority NOT NULL,
+    is_read INTEGER AS Boolean DEFAULT 0
+);
+
+-- 7. Vault Configuration (Single Row)
+CREATE TABLE vault_config (
+    id INTEGER PRIMARY KEY CHECK (id = 0),
+    user_name TEXT NOT NULL,
+    currency_code TEXT NOT NULL,
+    is_biometric_enabled INTEGER AS Boolean NOT NULL,
+    theme_mode TEXT AS ThemeMode NOT NULL
+);
+
+-- 8. Credit Card Bills
+CREATE TABLE credit_card_bill (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_handle TEXT NOT NULL,
+    card_name TEXT NOT NULL,
+    billing_cycle_start INTEGER NOT NULL,
+    billing_cycle_end INTEGER NOT NULL,
+    due_date INTEGER NOT NULL,
+    total_amount REAL NOT NULL,
+    minimum_due REAL NOT NULL,
+    is_paid INTEGER AS Boolean DEFAULT 0,
+    paid_amount REAL DEFAULT 0,
+    paid_date INTEGER,
+    reminder_sent INTEGER AS Boolean DEFAULT 0
+);
+
+--- QUERIES ---
+
+-- Transaction Queries with Normalization Join
+selectAllTransactions:
+SELECT
+    T.*,
+    M.clean_name AS alias_name,
+    M.icon_path
+FROM transaction_entity T
+LEFT JOIN merchant_alias M ON T.merchant_raw LIKE M.raw_match
+ORDER BY T.timestamp DESC;
+
+insertTransaction:
+INSERT INTO transaction_entity(amount, currency_code, merchant_raw, category, card_handle, timestamp)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Dashboard Analytics
+getTotalSpendForCard:
+SELECT SUM(amount) FROM transaction_entity WHERE card_handle = ?;
+
+getCategorySummary:
+SELECT category, SUM(amount), COUNT(*)
+FROM transaction_entity
+GROUP BY category;
+
+-- SMS Processing
+findTemplateBySender:
+SELECT * FROM sms_template WHERE sender_id = ? AND is_active = 1;
+
+-- Security & Audit
+insertAudit:
+INSERT INTO audit_log(id, timestamp, event_type, message)
+VALUES (?, ?, ?, ?);
+
+-- Alerts
+getUnreadAlerts:
+SELECT * FROM spending_alert WHERE is_read = 0 ORDER BY priority DESC;
+
+-- Vault Config
+getVaultConfig:
+SELECT * FROM vault_config WHERE id = 0;
+
+insertVaultConfig:
+INSERT OR REPLACE INTO vault_config(id, user_name, currency_code, is_biometric_enabled, theme_mode)
+VALUES (0, ?, ?, ?, ?);
+
+-- Credit Card Bill Queries
+insertBill:
+INSERT INTO credit_card_bill(card_handle, card_name, billing_cycle_start, billing_cycle_end, due_date, total_amount, minimum_due)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+getUpcomingBills:
+SELECT * FROM credit_card_bill
+WHERE is_paid = 0 AND due_date >= ? AND due_date <= ?
+ORDER BY due_date ASC;
+
+getBillsDueInDays:
+SELECT * FROM credit_card_bill
+WHERE is_paid = 0 AND reminder_sent = 0 AND due_date <= ?
+ORDER BY due_date ASC;
+
+markBillPaid:
+UPDATE credit_card_bill
+SET is_paid = 1, paid_amount = ?, paid_date = ?
+WHERE id = ?;
+
+markReminderSent:
+UPDATE credit_card_bill
+SET reminder_sent = 1
+WHERE id = ?;
+
+getAllBills:
+SELECT * FROM credit_card_bill ORDER BY due_date DESC;

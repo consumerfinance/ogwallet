@@ -1,0 +1,9 @@
+platform :ios, '15.0'
+
+target 'iosApp' do
+  use_frameworks!
+
+  # This line links your Kotlin shared module as a pod
+  # Change 'shared' to 'composeApp' if that is your module name
+  pod 'composeApp', :path => '../composeApp'
+end

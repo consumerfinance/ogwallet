@@ -1,0 +1,16 @@
+package dev.consumerfinance.ogwallet.models
+
+enum class AuditEventType {
+    VAULT_UNLOCKED,
+    VAULT_LOCKED,
+    TRANSACTION_ADDED,
+    TRANSACTION_MODIFIED,
+    TRANSACTION_DELETED,
+    SETTINGS_CHANGED,
+    BIOMETRIC_ENABLED,
+    BIOMETRIC_DISABLED,
+    FAILED_LOGIN_ATTEMPT,
+    DATA_EXPORT,
+    DATA_IMPORT
+}
+

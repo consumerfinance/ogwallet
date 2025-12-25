@@ -1,0 +1,27 @@
+PODS:
+  - composeApp (1.0.0):
+    - SQLCipher (~> 4.0)
+  - SQLCipher (4.10.0):
+    - SQLCipher/standard (= 4.10.0)
+  - SQLCipher/common (4.10.0)
+  - SQLCipher/standard (4.10.0):
+    - SQLCipher/common
+
+DEPENDENCIES:
+  - composeApp (from `../composeApp`)
+
+SPEC REPOS:
+  trunk:
+    - SQLCipher
+
+EXTERNAL SOURCES:
+  composeApp:
+    :path: "../composeApp"
+
+SPEC CHECKSUMS:
+  composeApp: 74e21ad1d76b34b83d34c8c3600aebbf23dff425
+  SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
+
+PODFILE CHECKSUM: 3daf2446134294afba444bd8ab3503273bbd3a19
+
+COCOAPODS: 1.16.2
