@@ -34,7 +34,7 @@ fun MainNavigationContainer() {
         NavigationItem("Offers", Icons.Filled.CardGiftcard, "offers"),
         NavigationItem("Travel", Icons.Filled.Flight, "travel"),
         NavigationItem("Stats", Icons.Filled.TrendingUp, "stats"),
-        NavigationItem("Import", Icons.Filled.Email, "import")
+        NavigationItem("Settings", Icons.Filled.Settings, "settings")
     )
 
     // Detect platform for responsive layout
@@ -82,7 +82,7 @@ fun DesktopNavigationLayout(
                 3 -> OffersRewardsScreen()
                 4 -> TravelPlansScreen()
                 5 -> BudgetAnalyticsScreen()
-                6 -> ImportScreen()
+                6 -> SettingsScreen()
             }
         }
 
@@ -265,7 +265,7 @@ fun MobileNavigationLayout(
                 3 -> OffersRewardsScreen()
                 4 -> TravelPlansScreen()
                 5 -> BudgetAnalyticsScreen()
-                6 -> ImportScreen()
+                6 -> SettingsScreen()
             }
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,11 +15,34 @@ import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.db.TransactionRepository
 import dev.consumerfinance.ogwallet.services.MboxImportService
 import dev.consumerfinance.ogwallet.util.MboxImportResult
+import dev.consumerfinance.ogwallet.getPlatform
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
 fun ImportScreen() {
+    var showSmsScanner by remember { mutableStateOf(false) }
+
+    // Check if we're on Android
+    val platform = getPlatform()
+    val isAndroid = platform.name.contains("Android")
+
+    if (showSmsScanner && isAndroid) {
+        // Show SMS scanner screen (Android-specific)
+        SmsScannerScreenWrapper(onBack = { showSmsScanner = false })
+    } else {
+        ImportScreenContent(
+            isAndroid = isAndroid,
+            onOpenSmsScanner = { showSmsScanner = true }
+        )
+    }
+}
+
+@Composable
+private fun ImportScreenContent(
+    isAndroid: Boolean,
+    onOpenSmsScanner: () -> Unit
+) {
     val repository = koinInject<TransactionRepository>()
     val importService = remember { MboxImportService(repository) }
     val scope = rememberCoroutineScope()
@@ -55,7 +79,26 @@ fun ImportScreen() {
         )
         
         Spacer(modifier = Modifier.height(16.dp))
-        
+
+        // SMS Import Button (Android only)
+        if (isAndroid) {
+            Button(
+                onClick = onOpenSmsScanner,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Icon(Icons.Default.Message, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Import from SMS")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // Import Button
         Button(
             onClick = {
@@ -163,3 +206,8 @@ fun ImportScreen() {
     }
 }
 
+/**
+ * Wrapper for SMS scanner that delegates to platform-specific implementation
+ */
+@Composable
+expect fun SmsScannerScreenWrapper(onBack: () -> Unit)

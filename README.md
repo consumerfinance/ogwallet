@@ -37,6 +37,45 @@ OGWallet now includes a complete system for crowdsourcing and displaying credit 
 
 ---
 
+## 📱 SMS Scanning Feature (Android)
+
+OGWallet can automatically scan your SMS messages and import credit card transactions!
+
+### Features
+- 📨 **Automatic SMS Scanning** - Scan all existing SMS messages
+- 🔄 **Real-time Interception** - Capture new transaction SMS automatically
+- 🏦 **25+ Banks Supported** - HDFC, ICICI, SBI, Axis, and more
+- 🔒 **Privacy First** - All processing happens locally on your device
+- 📊 **Progress Tracking** - Real-time scan progress with statistics
+
+### Quick Start
+
+1. **Open the app** on your Android device
+2. **Grant SMS permissions** when prompted
+3. **Navigate** to the Import tab (📧)
+4. **Tap** "Import from SMS"
+5. **Select** time range (90 days recommended)
+6. **Start scan** and wait for completion
+7. **View** your transactions in the Home tab
+
+### What Gets Imported?
+
+✅ Transaction amount
+✅ Merchant name
+✅ Card last 4 digits
+✅ Transaction date & time
+
+❌ Full card numbers (never stored)
+❌ CVV codes (never stored)
+❌ PINs or OTPs (never stored)
+
+### Documentation
+- 📖 [User Guide](SMS_SCANNING_GUIDE.md) - Complete user documentation
+- 🚀 [Quick Start](SMS_SCANNING_QUICK_START.md) - Get started in 5 minutes
+- 🔧 [Technical Docs](SMS_SCANNING_IMPLEMENTATION.md) - Implementation details
+
+---
+
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
   - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
