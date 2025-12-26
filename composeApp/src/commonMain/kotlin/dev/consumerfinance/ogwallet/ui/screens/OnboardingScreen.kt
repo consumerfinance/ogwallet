@@ -141,8 +141,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         ) { page ->
             when (page) {
                 0 -> WelcomeStep()
-                1 -> CardSetupStep(setup) { setup = it }
-                2 -> SecurityStep()
+                1 -> SecurityStep()
             }
         }
     }
@@ -164,30 +163,7 @@ fun WelcomeStep() {
     }
 }
 
-@Composable
-fun CardSetupStep(setup: InitialSetup, onUpdate: (InitialSetup) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-        Text("Let's add your first card", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = setup.cardName,
-            onValueChange = { onUpdate(setup.copy(cardName = it)) },
-            label = { Text("Card Name (e.g., Amex Gold)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = setup.spendGoal,
-            onValueChange = { onUpdate(setup.copy(spendGoal = it)) },
-            label = { Text("Spending Goal ($)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
 
 @Composable
 fun SecurityStep() {
