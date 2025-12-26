@@ -22,10 +22,12 @@ import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.models.CreditCard
 import dev.consumerfinance.ogwallet.models.TransactionEntry
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager // New import
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
+import dev.consumerfinance.ogwallet.util.formatCurrency
 
 
 @OptIn(ExperimentalTime::class)
@@ -33,26 +35,34 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun DashboardScreen(onNavigate: (Int) -> Unit) {
     val repository: TransactionRepository = koinInject()
+    val dbManager: DatabaseManager = koinInject() // Inject DatabaseManager
     val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
     val categoryBreakdown by repository.getSpendingBreakdown().collectAsState(initial = emptyList())
+    val userName by dbManager.getUserName().collectAsState(initial = "User") // Collect userName
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD") // Collect currencyCode
 
-    val cards = listOf(
-        CreditCard(
-            "Chase Sapphire Reserve",
-            "4829",
-            "",
-            last4 = "10000",
-            expiry = "",
-            balance = 90.00,
-            limit = 88,
-            availableCredit = 099.00,
-            gradient = listOf(Color(0xFF334155), Color(0xFF0f172a)),
-            network = "",
-            nextPayment = "",
-            minPayment = 90.00,
-            cvv =""
-        ),
-    )
+    val cards = remember(transactions) {
+        transactions
+            .groupBy { it.cardHandle ?: "Unknown" }
+            .map { (cardHandle, cardTransactions) ->
+                val balance = cardTransactions.sumOf { it.amount }
+                CreditCard(
+                    id = cardHandle, // Use cardHandle as ID
+                    name = "$cardHandle Card", // Placeholder name
+                    last4 = cardHandle.takeLast(4), // Assume last 4 digits are in cardHandle
+                    balance = balance,
+                    limit = 0, // Placeholder
+                    availableCredit = 0.0, // Placeholder
+                    gradient = listOf(Color(0xFF334155), Color(0xFF0f172a)), // Default gradient
+                    network = "", // Placeholder
+                    expiry = "", // Placeholder
+                    nextPayment = "", // Placeholder
+                    minPayment = 0.0, // Placeholder
+                    cvv = "",
+                    cardNumber = cardHandle.takeLast(4) // Placeholder
+                )
+            }
+    }
 
     // Calculate total spending from transactions
     val totalSpent = transactions.sumOf { it.amount }
@@ -85,56 +95,56 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
         }
 
         // Alert Banner
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Transparent
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    Color(0xFF3b82f6),
-                                    Color(0xFF8b5cf6)
-                                )
-                            )
-                        )
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.CardGiftcard,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                        Column {
-                            Text(
-                                "2,500 points expiring Dec 31",
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            TextButton(
-                                onClick = { onNavigate(3) },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text("Redeem now")
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//        item {
+//            Card(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 16.dp),
+//                shape = RoundedCornerShape(16.dp),
+//                colors = CardDefaults.cardColors(
+//                    containerColor = Color.Transparent
+//                )
+//            ) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .background(
+//                            brush = Brush.horizontalGradient(
+//                                colors = listOf(
+//                                    Color(0xFF3b82f6),
+//                                    Color(0xFF8b5cf6)
+//                                )
+//                            )
+//                        )
+//                        .padding(16.dp)
+//                ) {
+//                    Row(
+//                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Filled.CardGiftcard,
+//                            contentDescription = null,
+//                            tint = Color.White
+//                        )
+//                        Column {
+//                            Text(
+//                                "2,500 points expiring Dec 31",
+//                                color = Color.White,
+//                                style = MaterialTheme.typography.bodyMedium
+//                            )
+//                            TextButton(
+//                                onClick = { onNavigate(3) },
+//                                colors = ButtonDefaults.textButtonColors(
+//                                    contentColor = Color.White
+//                                )
+//                            ) {
+//                                Text("Redeem now")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // Quick Stats
         item {
@@ -148,7 +158,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                     icon = Icons.Filled.CreditCard,
                     iconColor = Color(0xFF3b82f6),
                     label = "Total Spent",
-                    value = "₹${formatCurrency(totalSpent)}",
+                    value = "${currencyCode}${formatCurrency(totalSpent)}",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
@@ -212,7 +222,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    TextButton(onClick = { onNavigate(5) }) {
+                    TextButton(onClick = { onNavigate(2) }) {
                         Text("See all")
                         Icon(
                             imageVector = Icons.Filled.ChevronRight,
@@ -251,7 +261,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                     } else {
                         Column {
                             transactions.take(5).forEach { transaction ->
-                                TransactionItem(transaction)
+                                TransactionItem(transaction, currencyCode)
                                 if (transaction != transactions.take(5).last()) {
                                     HorizontalDivider()
                                 }
@@ -285,25 +295,25 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                         onClick = { onNavigate(1) },
                         modifier = Modifier.weight(1f)
                     )
-                    QuickActionButton(
-                        icon = Icons.Filled.CardGiftcard,
-                        label = "Offers",
-                        color = Color(0xFF8b5cf6),
-                        onClick = { onNavigate(3) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickActionButton(
-                        icon = Icons.Filled.Flight,
-                        label = "Travel",
-                        color = Color(0xFFf97316),
-                        onClick = { onNavigate(4) },
-                        modifier = Modifier.weight(1f)
-                    )
+//                    QuickActionButton(
+//                        icon = Icons.Filled.CardGiftcard,
+//                        label = "Offers",
+//                        color = Color(0xFF8b5cf6),
+//                        onClick = { onNavigate(3) },
+//                        modifier = Modifier.weight(1f)
+//                    )
+//                    QuickActionButton(
+//                        icon = Icons.Filled.Flight,
+//                        label = "Travel",
+//                        color = Color(0xFFf97316),
+//                        onClick = { onNavigate(4) },
+//                        modifier = Modifier.weight(1f)
+//                    )
                     QuickActionButton(
                         icon = Icons.Filled.TrendingUp,
                         label = "Stats",
                         color = Color(0xFF10b981),
-                        onClick = { onNavigate(5) },
+                        onClick = { onNavigate(3) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -330,7 +340,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        TextButton(onClick = { onNavigate(5) }) {
+                        TextButton(onClick = { onNavigate(3) }) {
                             Text("Details")
                         }
                     }
@@ -347,7 +357,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "₹${formatCurrency(totalSpent)} of ₹${formatCurrency(monthlyBudget, 0)}",
+                            "${currencyCode}${formatCurrency(totalSpent)} of ${currencyCode}${formatCurrency(monthlyBudget, 0)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -368,8 +378,8 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
 
                     val remaining = monthlyBudget - totalSpent
                     Text(
-                        if (remaining > 0) "₹${formatCurrency(remaining)} remaining in budget"
-                        else "₹${formatCurrency(-remaining)} over budget",
+                        if (remaining > 0) "${currencyCode}${formatCurrency(remaining)} remaining in budget"
+                        else "${currencyCode}${formatCurrency(-remaining)} over budget",
                         style = MaterialTheme.typography.bodySmall,
                         color = if (remaining > 0) MaterialTheme.colorScheme.onSurfaceVariant
                                else Color(0xFFef4444)
@@ -505,7 +515,7 @@ fun CreditCardItem(card: CreditCard, onClick: () -> Unit) {
 
 @OptIn(ExperimentalTime::class)
 @Composable
-fun TransactionItem(transaction: TransactionEntry) {
+fun TransactionItem(transaction: TransactionEntry, currencyCode: String) {
     // Get emoji based on category
     val emoji = when (transaction.category.uppercase()) {
         "FOOD" -> "🍔"
@@ -561,7 +571,7 @@ fun TransactionItem(transaction: TransactionEntry) {
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                "₹${formatCurrency(transaction.amount)}",
+                "${currencyCode}${formatCurrency(transaction.amount)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -574,24 +584,14 @@ fun TransactionItem(transaction: TransactionEntry) {
     }
 }
 
-@OptIn(kotlin.time.ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 @Composable
 fun formatTimestamp(instant: Instant): String {
     // Simple formatting - you can enhance this
     return instant.toString().substringBefore('T')
 }
 
-// Helper function for formatting currency amounts
-fun formatCurrency(amount: Double, decimals: Int = 2): String {
-    val rounded = (amount * 100).toLong() / 100.0
-    val intPart = rounded.toLong()
-    val decimalPart = ((rounded - intPart) * 100).toLong()
-    return if (decimals == 0) {
-        "$intPart"
-    } else {
-        "$intPart.${decimalPart.toString().padStart(2, '0')}"
-    }
-}
+
 
 @Composable
 fun QuickActionButton(
