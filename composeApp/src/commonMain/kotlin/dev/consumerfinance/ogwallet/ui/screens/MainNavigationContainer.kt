@@ -31,8 +31,7 @@ fun MainNavigationContainer() {
         NavigationItem("Home", Icons.Filled.Home, "home"),
         NavigationItem("Cards", Icons.Filled.CreditCard, "cards"),
         NavigationItem("Wallet", Icons.Filled.AccountBalanceWallet, "wallet"),
-        NavigationItem("Offers", Icons.Filled.CardGiftcard, "offers"),
-        NavigationItem("Travel", Icons.Filled.Flight, "travel"),
+
         NavigationItem("Stats", Icons.Filled.TrendingUp, "stats"),
         NavigationItem("Settings", Icons.Filled.Settings, "settings")
     )
@@ -78,11 +77,8 @@ fun DesktopNavigationLayout(
             when (selectedTab) {
                 0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
                 1 -> CreditCardsScreen()
-                2 -> WalletScreen()
-                3 -> OffersRewardsScreen()
-                4 -> TravelPlansScreen()
-                5 -> BudgetAnalyticsScreen()
-                6 -> SettingsScreen()
+                                        2 -> BudgetScreen()                3 -> BudgetAnalyticsScreen()
+                4 -> SettingsScreen()
             }
         }
 
@@ -229,47 +225,44 @@ fun MobileNavigationLayout(
     navigationItems: List<NavigationItem>,
     onTabSelected: (Int) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("FinanceHub", style = MaterialTheme.typography.titleMedium)
-                    }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("OG Wallet", style = MaterialTheme.typography.titleMedium)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        bottomBar = {
-            CustomBottomNavigation(
-                selectedTab = selectedTab,
-                items = navigationItems,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (selectedTab) {
-                0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
-                1 -> CreditCardsScreen()
-                2 -> WalletScreen()
-                3 -> OffersRewardsScreen()
-                4 -> TravelPlansScreen()
-                5 -> BudgetAnalyticsScreen()
-                6 -> SettingsScreen()
-            }
-        }
-    }
-}
+                bottomBar = {
+                    CustomBottomNavigation(
+                        selectedTab = selectedTab,
+                        items = navigationItems,
+                        onTabSelected = onTabSelected
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    when (selectedTab) {
+                        0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
+                        1 -> CreditCardsScreen()
+                        2 -> BudgetScreen()
+                        3 -> BudgetAnalyticsScreen()
+                        4 -> SettingsScreen()
+                    }
+                }
+            }}
 
 
 

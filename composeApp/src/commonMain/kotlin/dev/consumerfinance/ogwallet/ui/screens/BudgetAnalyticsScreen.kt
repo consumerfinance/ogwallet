@@ -38,10 +38,9 @@ private fun getCategoryColor(category: String): Color {
 @Composable
 fun BudgetAnalyticsScreen() {
     val repository: TransactionRepository = koinInject()
-    val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
-    val categoryBreakdown by repository.getSpendingBreakdown().collectAsState(initial = emptyList())
-
-    var timeRange by remember { mutableStateOf("month") }
+    var timeRange by remember { mutableStateOf("month") } // Moved to before usage
+    val transactions by repository.getTransactionsByTimeRange(timeRange).collectAsState(initial = emptyList())
+    val categoryBreakdown by repository.getSpendingBreakdownByTimeRange(timeRange).collectAsState(initial = emptyList())
 
     // Define budgets for each category
     val categoryBudgets = mapOf(
@@ -267,6 +266,7 @@ fun BudgetAnalyticsScreen() {
                                     Text(
                                         category.name,
                                         style = MaterialTheme.typography.bodySmall,
+                                        color = if (category.name.uppercase() == "OTHER") Color.Black else MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
@@ -351,7 +351,7 @@ fun TimeRangeButton(
         elevation = if (selected) ButtonDefaults.buttonElevation(2.dp) else ButtonDefaults.buttonElevation(0.dp),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Text(text, style = MaterialTheme.typography.bodySmall)
+        Text(text, style = MaterialTheme.typography.bodySmall, color = Color.Black)
     }
 }
 

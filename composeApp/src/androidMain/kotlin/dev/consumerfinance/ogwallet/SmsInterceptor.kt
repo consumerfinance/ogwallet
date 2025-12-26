@@ -17,6 +17,7 @@ import org.koin.core.component.inject
 
 class SmsInterceptor : BroadcastReceiver(), KoinComponent {
     private val repository: TransactionRepository by inject()
+    private val smsParser: SmsParser by inject()
 
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
@@ -25,12 +26,12 @@ class SmsInterceptor : BroadcastReceiver(), KoinComponent {
                 val body = sms.displayMessageBody
                 Log.d("SmsInterceptor", "Received SMS: $body")
 
-                val match = SmsParser.parse(body)
+                CoroutineScope(Dispatchers.IO).launch { // Launch coroutine for suspend calls
+                    val match = smsParser.parse(body)
 
-                if (match != null) {
-                    Log.d("SmsInterceptor", "Parsed transaction: ${match.amount} at ${match.merchantRaw}")
-                    // This only works if the user has already unlocked the vault!
-                    CoroutineScope(Dispatchers.IO).launch {
+                    if (match != null) {
+                        Log.d("SmsInterceptor", "Parsed transaction: ${match.amount} at ${match.merchantRaw}")
+                        // This only works if the user has already unlocked the vault!
                         try {
                             repository.addTransaction(
                                 TransactionEntry(
@@ -46,9 +47,9 @@ class SmsInterceptor : BroadcastReceiver(), KoinComponent {
                         } catch (e: Exception) {
                             Log.e("SmsInterceptor", "Failed to save transaction: ${e.message}", e)
                         }
+                    } else {
+                        Log.d("SmsInterceptor", "SMS did not match transaction pattern")
                     }
-                } else {
-                    Log.d("SmsInterceptor", "SMS did not match transaction pattern")
                 }
             }
         }

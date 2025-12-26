@@ -12,6 +12,10 @@ import org.koin.compose.koinInject
 import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.ui.screens.*
 import dev.consumerfinance.ogwallet.ui.screens.OnboardingScreen
+import dev.consumerfinance.ogwallet.models.ThemeMode
+import androidx.compose.foundation.isSystemInDarkTheme
+import dev.consumerfinance.ogwallet.ui.theme.DarkColorScheme
+import dev.consumerfinance.ogwallet.ui.theme.LightColorScheme
 
 @Composable
 fun App() {
@@ -29,7 +33,14 @@ fun App() {
         }
     }
 
-    MaterialTheme(colorScheme = darkColorScheme()) {
+    val currentThemeMode by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
+    val useDarkTheme = when (currentThemeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+
+    MaterialTheme(colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme) {
         Surface {
             when {
                 // Show lock screen first if not unlocked

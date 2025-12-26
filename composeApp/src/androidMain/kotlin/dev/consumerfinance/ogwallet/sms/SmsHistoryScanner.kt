@@ -21,6 +21,7 @@ import org.koin.core.component.inject
  */
 class SmsHistoryScanner(private val context: Context) : KoinComponent {
     private val repository: TransactionRepository by inject()
+    private val smsParser: SmsParser by inject()
     
     companion object {
         private const val TAG = "SmsHistoryScanner"
@@ -64,7 +65,7 @@ class SmsHistoryScanner(private val context: Context) : KoinComponent {
                 scannedMessages++
                 
                 // Try to parse the SMS
-                val match = SmsParser.parse(sms.body)
+                val match = smsParser.parse(sms.body)
                 
                 if (match != null) {
                     transactionsFound++

@@ -112,6 +112,22 @@ SELECT category, SUM(amount), COUNT(*)
 FROM transaction_entity
 GROUP BY category;
 
+selectTransactionsByTimeRange:
+SELECT
+    T.*,
+    M.clean_name AS alias_name,
+    M.icon_path
+FROM transaction_entity T
+LEFT JOIN merchant_alias M ON T.merchant_raw LIKE M.raw_match
+WHERE T.timestamp >= ? AND T.timestamp <= ?
+ORDER BY T.timestamp DESC;
+
+getCategorySummaryByTimeRange:
+SELECT category, SUM(amount), COUNT(*)
+FROM transaction_entity
+WHERE timestamp >= ? AND timestamp <= ?
+GROUP BY category;
+
 -- SMS Processing
 findTemplateBySender:
 SELECT * FROM sms_template WHERE sender_id = ? AND is_active = 1;
@@ -129,9 +145,22 @@ SELECT * FROM spending_alert WHERE is_read = 0 ORDER BY priority DESC;
 getVaultConfig:
 SELECT * FROM vault_config WHERE id = 0;
 
+getUserName:
+SELECT user_name FROM vault_config WHERE id = 0;
+
 insertVaultConfig:
 INSERT OR REPLACE INTO vault_config(id, user_name, currency_code, is_biometric_enabled, theme_mode)
 VALUES (0, ?, ?, ?, ?);
+
+updateThemeMode:
+UPDATE vault_config
+SET theme_mode = ?
+WHERE id = 0;
+
+updateCurrencyCode:
+UPDATE vault_config
+SET currency_code = ?
+WHERE id = 0;
 
 -- Credit Card Bill Queries
 insertBill:

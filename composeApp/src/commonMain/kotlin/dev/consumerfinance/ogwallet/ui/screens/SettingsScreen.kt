@@ -14,38 +14,187 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.getPlatform
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.RadioButton
+import dev.consumerfinance.ogwallet.models.ThemeMode
+import dev.consumerfinance.ogwallet.auth.BiometricAuth // New import
+import dev.consumerfinance.ogwallet.services.DataExportService
+import org.koin.compose.koinInject
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import java.io.OutputStreamWriter
+import kotlinx.coroutines.launch // New import
+import androidx.compose.ui.text.input.VisualTransformation // New import
+import androidx.compose.ui.text.input.PasswordVisualTransformation // New import
+import androidx.compose.foundation.text.KeyboardOptions // New import
+import androidx.compose.ui.text.input.KeyboardType // New import
+
+import androidx.activity.compose.BackHandler // Import BackHandler
+import dev.consumerfinance.ogwallet.db.DatabaseManager // Moved import
 
 @Composable
 fun SettingsScreen() {
-    var showSmsScanner by remember { mutableStateOf(false) }
-    var showMboxImport by remember { mutableStateOf(false) }
+    var currentRoute by remember { mutableStateOf(SettingsScreenRoute.MAIN_SETTINGS) }
+
+    // State for dialogs (these are not part of navigation stack)
+    var showExportDataDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
+    var showChangePinDialog by remember { mutableStateOf(false) }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
+
+    var exportedDataContent by remember { mutableStateOf<String?>(null) } // To hold data before saving
+
+    val biometricAuth = koinInject<BiometricAuth>() // Inject BiometricAuth
+
+    val dataExportService = koinInject<DataExportService>()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current // Get context for file operations
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json") // MIME type for JSON
+    ) { uri ->
+        uri?.let { fileUri ->
+            exportedDataContent?.let { content ->
+                scope.launch {
+                    try {
+                        context.contentResolver.openOutputStream(fileUri)?.use { outputStream ->
+                            OutputStreamWriter(outputStream).use { writer ->
+                                writer.write(content)
+                            }
+                        }
+                        // Optionally show a success message
+                        println("Export successful to $fileUri")
+                    } catch (e: Exception) {
+                        // Optionally show an error message
+                        println("Export failed: ${e.message}")
+                        e.printStackTrace()
+                    } finally {
+                        exportedDataContent = null // Clear content after saving attempt
+                    }
+                }
+            }
+        }
+    }
+
+    val dbManager = koinInject<DatabaseManager>() // Inject DatabaseManager
 
     // Check if we're on Android
     val platform = getPlatform()
     val isAndroid = platform.name.contains("Android")
 
-    when {
-        showSmsScanner && isAndroid -> {
-            SmsScannerScreenWrapper(onBack = { showSmsScanner = false })
+    // Handle back press
+    BackHandler(enabled = currentRoute != SettingsScreenRoute.MAIN_SETTINGS) {
+        currentRoute = SettingsScreenRoute.MAIN_SETTINGS
+    }
+
+    when (currentRoute) {
+        SettingsScreenRoute.SMS_SCANNER -> {
+            SmsScannerScreenWrapper(onBack = { currentRoute = SettingsScreenRoute.MAIN_SETTINGS })
         }
-        showMboxImport -> {
-            MboxImportScreen(onBack = { showMboxImport = false })
+        SettingsScreenRoute.MBOX_IMPORT -> {
+            MboxImportScreen(onBack = { currentRoute = SettingsScreenRoute.MAIN_SETTINGS })
         }
-        else -> {
+        SettingsScreenRoute.MAIN_SETTINGS -> {
             SettingsScreenContent(
                 isAndroid = isAndroid,
-                onOpenSmsScanner = { showSmsScanner = true },
-                onOpenMboxImport = { showMboxImport = true }
+                onOpenSmsScanner = { currentRoute = SettingsScreenRoute.SMS_SCANNER },
+                onOpenMboxImport = { currentRoute = SettingsScreenRoute.MBOX_IMPORT },
+                onExportDataClicked = { showExportDataDialog = true },
+                onOpenThemeSelector = { showThemeDialog = true },
+                onChangeMasterPinClicked = { showChangePinDialog = true },
+                onOpenCurrencySelector = { showCurrencyDialog = true },
+                dbManager = dbManager
             )
+
+            if (showExportDataDialog) {
+                ExportDataDialog(
+                    onDismiss = { showExportDataDialog = false },
+                    onExport = { password ->
+                        showExportDataDialog = false // Dismiss dialog immediately
+                        scope.launch {
+                            try {
+                                val encryptedData = dataExportService.exportData(password)
+                                exportedDataContent = encryptedData // Store encrypted data
+                                // Launch the file picker to choose save location
+                                createDocumentLauncher.launch("ogwallet_export.json") // Suggest default filename
+                            } catch (e: Exception) {
+                                // TODO: Handle encryption/export error, e.g., show a Snackbar
+                                println("Error during data export: ${e.message}")
+                            }
+                        }
+                    }
+                )
+            }
+
+            if (showThemeDialog) {
+                ThemeSelectionDialog(
+                    onDismiss = { showThemeDialog = false },
+                    onThemeSelected = { themeMode ->
+                        scope.launch {
+                            dbManager.updateThemeMode(themeMode) // Save theme preference
+                            // No need to apply immediately, App.kt will observe
+                            println("Selected theme: $themeMode")
+                        }
+                        showThemeDialog = false
+                    }
+                )
+            }
+
+            if (showChangePinDialog) {
+                ChangePinDialog(
+                    onDismiss = { showChangePinDialog = false },
+                    onChangePin = { oldPin, newPin ->
+                        showChangePinDialog = false // Dismiss dialog immediately
+                        scope.launch {
+                            val oldPinVerificationResult = biometricAuth.verifyMasterPIN(oldPin)
+                            if (oldPinVerificationResult.isSuccess) {
+                                val newPinSetupResult = biometricAuth.setupMasterPIN(newPin)
+                                if (newPinSetupResult.isSuccess) {
+                                    println("PIN changed successfully")
+                                    // TODO: Show success message to user
+                                } else {
+                                    println("Failed to set new PIN: ${newPinSetupResult.exceptionOrNull()?.message}")
+                                    // TODO: Show error to user
+                                }
+                            } else {
+                                println("Old PIN verification failed: ${oldPinVerificationResult.exceptionOrNull()?.message}")
+                                // TODO: Show error to user
+                            }
+                        }
+                    }
+                )
+            }
+
+            if (showCurrencyDialog) {
+                CurrencySelectionDialog(
+                    onDismiss = { showCurrencyDialog = false },
+                    onCurrencySelected = { currencyCode ->
+                        scope.launch {
+                            dbManager.updateCurrencyCode(currencyCode) // Save currency preference
+                            println("Selected currency: $currencyCode")
+                        }
+                        showCurrencyDialog = false
+                    }
+                )
+            }
         }
     }
 }
+
+
 
 @Composable
 private fun SettingsScreenContent(
     isAndroid: Boolean,
     onOpenSmsScanner: () -> Unit,
-    onOpenMboxImport: () -> Unit
+    onOpenMboxImport: () -> Unit,
+    onExportDataClicked: () -> Unit,
+    onOpenThemeSelector: () -> Unit,
+    onChangeMasterPinClicked: () -> Unit, // New parameter
+    onOpenCurrencySelector: () -> Unit, // Add this parameter
+    dbManager: DatabaseManager // New parameter
 ) {
     LazyColumn(
         modifier = Modifier
@@ -95,7 +244,7 @@ private fun SettingsScreenContent(
                     icon = Icons.Default.CloudUpload,
                     title = "Export Data",
                     subtitle = "Export your data to a file",
-                    onClick = { /* TODO */ }
+                    onClick = onExportDataClicked
                 )
             }
         }
@@ -107,7 +256,7 @@ private fun SettingsScreenContent(
                     icon = Icons.Default.Lock,
                     title = "Change Master PIN",
                     subtitle = "Update your security PIN",
-                    onClick = { /* TODO */ }
+                    onClick = onChangeMasterPinClicked // Pass the new lambda
                 )
                 
                 SettingsItem(
@@ -133,7 +282,7 @@ private fun SettingsScreenContent(
                     icon = Icons.Default.Palette,
                     title = "Theme",
                     subtitle = "Light, Dark, or System",
-                    onClick = { /* TODO */ }
+                    onClick = onOpenThemeSelector // Pass the new lambda
                 )
                 
                 SettingsItem(
@@ -179,6 +328,296 @@ private fun SettingsScreenContent(
         }
     }
 }
+
+@Composable
+fun ExportDataDialog(
+    onDismiss: () -> Unit,
+    onExport: (String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showPassword by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Export Data") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Enter a password to encrypt your exported data.")
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Encryption Password") },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirm Password") },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = showPassword,
+                        onCheckedChange = { showPassword = it }
+                    )
+                    Text("Show Password", style = MaterialTheme.typography.bodySmall)
+                }
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    when {
+                        password.isEmpty() -> errorMessage = "Password cannot be empty"
+                        password != confirmPassword -> errorMessage = "Passwords do not match"
+                        else -> onExport(password)
+                    }
+                }
+            ) {
+                Text("Export")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun ThemeSelectionDialog(
+    onDismiss: () -> Unit,
+    onThemeSelected: (ThemeMode) -> Unit
+) {
+    val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.SYSTEM)
+    var selectedOption by remember { mutableStateOf(ThemeMode.SYSTEM) } // TODO: Get actual current theme
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Theme") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                themeOptions.forEach { themeMode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedOption = themeMode },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (selectedOption == themeMode),
+                            onClick = { selectedOption = themeMode }
+                        )
+                        Text(
+                            text = themeMode.name.lowercase().replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onThemeSelected(selectedOption) }) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun ChangePinDialog(
+    onDismiss: () -> Unit,
+    onChangePin: (oldPin: String, newPin: String) -> Unit
+) {
+    var oldPin by remember { mutableStateOf("") }
+    var newPin by remember { mutableStateOf("") }
+    var confirmNewPin by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showPin by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Change Master PIN") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Enter your current PIN and a new PIN.")
+
+                OutlinedTextField(
+                    value = oldPin,
+                    onValueChange = {
+                        if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                            oldPin = it
+                            errorMessage = null
+                        }
+                    },
+                    label = { Text("Current PIN (6 digits)") },
+                    singleLine = true,
+                    visualTransformation = if (showPin) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = newPin,
+                    onValueChange = {
+                        if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                            newPin = it
+                            errorMessage = null
+                        }
+                    },
+                    label = { Text("New PIN (6 digits)") },
+                    singleLine = true,
+                    visualTransformation = if (showPin) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = confirmNewPin,
+                    onValueChange = {
+                        if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                            confirmNewPin = it
+                            errorMessage = null
+                        }
+                    },
+                    label = { Text("Confirm New PIN") },
+                    singleLine = true,
+                    visualTransformation = if (showPin) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = showPin,
+                        onCheckedChange = { showPin = it }
+                    )
+                    Text("Show PIN", style = MaterialTheme.typography.bodySmall)
+                }
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    when {
+                        oldPin.isEmpty() || newPin.isEmpty() || confirmNewPin.isEmpty() -> errorMessage = "All PIN fields must be filled"
+                        oldPin.length != 6 -> errorMessage = "Current PIN must be 6 digits"
+                        newPin.length != 6 -> errorMessage = "New PIN must be 6 digits"
+                        newPin != confirmNewPin -> errorMessage = "New PINs do not match"
+                        else -> onChangePin(oldPin, newPin)
+                    }
+                }
+            ) {
+                Text("Change PIN")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun CurrencySelectionDialog(
+    onDismiss: () -> Unit,
+    onCurrencySelected: (String) -> Unit
+) {
+    val currencyOptions = listOf("INR" to "Indian Rupee", "USD" to "US Dollar")
+    var selectedOption by remember { mutableStateOf("INR") } // TODO: Get actual current currency
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Currency") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                currencyOptions.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedOption = code },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (selectedOption == code),
+                            onClick = { selectedOption = code }
+                        )
+                        Text(
+                            text = "$code ($name)",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onCurrencySelected(selectedOption) }) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
 
 @Composable
 private fun SettingsSection(

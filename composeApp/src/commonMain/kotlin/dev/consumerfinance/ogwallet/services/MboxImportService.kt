@@ -14,25 +14,24 @@ import kotlinx.datetime.Clock
  * Handles the complete workflow: file selection, parsing, validation, and database import.
  */
 class MboxImportService(
-    private val repository: TransactionRepository,
-    private val mboxImporter: MboxImporter = MboxImporter()
+    private val repository: TransactionRepository
 ) {
     
     /**
      * Import transactions from an mbox file.
      * Returns detailed import results including success/failure counts.
      */
-    suspend fun importFromMbox(): MboxImportResult = withContext(Dispatchers.Default) {
+    suspend fun importFromMbox(mboxContent: String?): MboxImportResult = withContext(Dispatchers.Default) {
         try {
-            // Step 1: Pick and read mbox file
-            val mboxContent = mboxImporter.pickAndReadMboxFile()
-                ?: return@withContext MboxImportResult(
+            if (mboxContent == null) {
+                return@withContext MboxImportResult(
                     totalMessages = 0,
                     importedTransactions = 0,
                     failedTransactions = 0,
                     totalAmount = 0.0,
                     errors = listOf("No file selected or import cancelled")
                 )
+            }
             
             // Step 2: Parse mbox file
             val messages = MboxParser.parseMessages(mboxContent)
@@ -92,20 +91,7 @@ class MboxImportService(
             )
         }
     }
-    
-    /**
-     * Preview transactions from an mbox file without importing.
-     * Useful for showing users what will be imported before committing.
-     */
-    suspend fun previewMboxTransactions(): MboxParser.MboxSummary? = withContext(Dispatchers.Default) {
-        try {
-            val mboxContent = mboxImporter.pickAndReadMboxFile() ?: return@withContext null
-            MboxParser.getSummary(mboxContent)
-        } catch (e: Exception) {
-            null
-        }
-    }
-    
+        
     /**
      * Simple category detection based on merchant name.
      * Can be enhanced with more sophisticated categorization logic.

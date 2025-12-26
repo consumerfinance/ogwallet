@@ -9,11 +9,18 @@ import kotlinx.datetime.Instant
  */
 object MboxParser {
     
+    data class Attachment(
+        val filename: String,
+        val contentType: String,
+        val content: String // Placeholder for base64 or raw content
+    )
+
     data class EmailMessage(
         val from: String,
         val subject: String,
         val date: String,
-        val body: String
+        val body: String,
+        val attachments: List<Attachment> = emptyList()
     )
     
     /**
@@ -48,7 +55,15 @@ object MboxParser {
         var subject = ""
         var date = ""
         val bodyLines = mutableListOf<String>()
+        val attachments = mutableListOf<Attachment>()
         var inBody = false
+        var inAttachment = false
+        var currentAttachmentFilename = "attachment"
+        var currentAttachmentContentType = "application/octet-stream"
+        val currentAttachmentContent = StringBuilder()
+
+        val attachmentHeaderRegex = Regex("(?i)Content-Disposition:\\s*attachment;\\s*filename\\*?=\"?([^\";]+)\"?")
+        val contentTypeRegex = Regex("(?i)Content-Type:\\s*([^;]+)")
         
         for (line in lines) {
             when {
@@ -61,20 +76,47 @@ object MboxParser {
                 line.startsWith("Date:", ignoreCase = true) -> {
                     date = line.substringAfter(":", "").trim()
                 }
-                line.isBlank() && !inBody -> {
-                    inBody = true // Empty line marks start of body
+                // Basic attachment detection (highly simplified)
+                // This will NOT handle complex MIME structures correctly without a proper MIME parser library
+                attachmentHeaderRegex.containsMatchIn(line) -> {
+                    val match = attachmentHeaderRegex.find(line)
+                    currentAttachmentFilename = match?.groupValues?.get(1) ?: "attachment"
+                    inAttachment = true
+                    inBody = false // Exit body context
+                }
+                inAttachment && contentTypeRegex.containsMatchIn(line) -> {
+                    val match = contentTypeRegex.find(line)
+                    currentAttachmentContentType = match?.groupValues?.get(1) ?: "application/octet-stream"
+                }
+                inAttachment && line.isBlank() && currentAttachmentContent.isNotEmpty() -> {
+                    // Attachment content ended, save it
+                    attachments.add(Attachment(currentAttachmentFilename, currentAttachmentContentType, currentAttachmentContent.toString()))
+                    currentAttachmentContent.clear()
+                    inAttachment = false // Reset
+                }
+                inAttachment && !line.isBlank() -> {
+                    currentAttachmentContent.appendLine(line)
+                }
+                line.isBlank() && !inBody && !inAttachment -> {
+                    inBody = true // Empty line marks start of body (if not in attachment)
                 }
                 inBody -> {
                     bodyLines.add(line)
                 }
             }
         }
+
+        // Add any pending attachment if message ends with one
+        if (inAttachment && currentAttachmentContent.isNotEmpty()) {
+            attachments.add(Attachment(currentAttachmentFilename, currentAttachmentContentType, currentAttachmentContent.toString()))
+        }
         
         return EmailMessage(
             from = from,
             subject = subject,
             date = date,
-            body = bodyLines.joinToString("\n")
+            body = bodyLines.joinToString("\n"),
+            attachments = attachments
         )
     }
     

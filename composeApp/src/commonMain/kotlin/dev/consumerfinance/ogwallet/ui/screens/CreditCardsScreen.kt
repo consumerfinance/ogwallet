@@ -20,7 +20,7 @@ import dev.consumerfinance.ogwallet.models.CreditCard
 import dev.consumerfinance.ogwallet.db.TransactionRepository
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
-import dev.consumerfinance.ogwallet.ui.screens.formatCurrency
+import dev.consumerfinance.ogwallet.util.formatCurrency
 
 
 @Preview
@@ -235,32 +235,32 @@ fun CreditCardsScreen() {
         }
 
         // Add Card Button
-        item {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                onClick = { }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "+ ",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Text(
-                        "Add New Card",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
+//        item {
+//            OutlinedCard(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 16.dp),
+//                shape = RoundedCornerShape(16.dp),
+//                onClick = { }
+//            ) {
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(24.dp),
+//                    horizontalArrangement = Arrangement.Center,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    Text(
+//                        "+ ",
+//                        style = MaterialTheme.typography.headlineSmall
+//                    )
+//                    Text(
+//                        "Add New Card",
+//                        style = MaterialTheme.typography.bodyLarge
+//                    )
+//                }
+//            }
+//        }
     }
 }
 

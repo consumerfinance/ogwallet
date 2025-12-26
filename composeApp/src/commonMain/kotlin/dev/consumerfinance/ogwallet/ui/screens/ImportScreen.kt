@@ -6,10 +6,13 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Message
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.db.TransactionRepository
@@ -18,6 +21,8 @@ import dev.consumerfinance.ogwallet.util.MboxImportResult
 import dev.consumerfinance.ogwallet.getPlatform
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 @Composable
 fun ImportScreen() {
@@ -46,11 +51,34 @@ private fun ImportScreenContent(
     val repository = koinInject<TransactionRepository>()
     val importService = remember { MboxImportService(repository) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var isImporting by remember { mutableStateOf(false) }
     var importResult by remember { mutableStateOf<MboxImportResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
+    val pickMboxFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { fileUri ->
+            scope.launch {
+                isImporting = true
+                errorMessage = null
+                try {
+                    val mboxContent = context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+                        BufferedReader(InputStreamReader(inputStream)).readText()
+                    }
+                    val result = importService.importFromMbox(mboxContent)
+                    importResult = result
+                } catch (e: Exception) {
+                    errorMessage = e.message ?: "Import failed"
+                } finally {
+                    isImporting = false
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,20 +130,7 @@ private fun ImportScreenContent(
         // Import Button
         Button(
             onClick = {
-                scope.launch {
-                    isImporting = true
-                    errorMessage = null
-                    importResult = null
-
-                    val result = importService.importFromMbox()
-                    importResult = result
-
-                    if (result.errors.isNotEmpty()) {
-                        errorMessage = result.errors.joinToString("\n")
-                    }
-
-                    isImporting = false
-                }
+                pickMboxFileLauncher.launch("application/mbox")
             },
             enabled = !isImporting,
             modifier = Modifier

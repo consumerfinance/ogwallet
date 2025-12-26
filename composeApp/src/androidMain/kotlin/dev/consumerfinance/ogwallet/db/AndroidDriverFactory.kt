@@ -23,4 +23,8 @@ actual class DriverFactory(private val context: Context) {
             factory = factory
         )
     }
+
+    actual fun deleteDatabase(name: String) {
+        context.deleteDatabase(name)
+    }
 }

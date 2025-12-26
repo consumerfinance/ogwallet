@@ -18,7 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.abs
-
+import org.koin.compose.koinInject
+import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.models.TransactionEntry
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 data class ConnectedAccount(
     val id: String,
     val name: String,
@@ -37,49 +42,48 @@ data class WalletActivity(
     val status: String
 )
 
-data class ScheduledTransfer(
-    val id: String,
-    val description: String,
-    val amount: Double,
-    val nextDate: String,
-    val frequency: String
-)
+
 
 @Preview
 @Composable
-fun WalletScreen() {
-    val walletBalance = 2450.75
+fun BudgetScreen() {
+    val transactionRepository = koinInject<TransactionRepository>()
+    val allTransactions by transactionRepository.getAllTransactions().collectAsState(emptyList())
 
-    val connectedAccounts = listOf(
-        ConnectedAccount(
-            "1", "Chase Checking", "Bank Account", 5234.50,
-            Icons.Filled.AccountBalance, Color(0xFF3b82f6)
-        ),
-        ConnectedAccount(
-            "2", "Savings Account", "Bank Account", 12450.00,
-            Icons.Filled.AccountBalance, Color(0xFF10b981)
-        ),
-        ConnectedAccount(
-            "3", "Sapphire Reserve", "Credit Card", -1234.56,
-            Icons.Filled.CreditCard, Color(0xFF8b5cf6)
-        ),
-        ConnectedAccount(
-            "4", "Digital Wallet", "Mobile Payment", 150.00,
-            Icons.Filled.Smartphone, Color(0xFFf97316)
-        )
-    )
+    val walletBalance = remember(allTransactions) {
+        allTransactions.sumOf { it.amount }
+    }
 
-    val recentActivity = listOf(
-        WalletActivity("1", "transfer", "Transfer to Savings", -500.00, "Today", "completed"),
-        WalletActivity("2", "payment", "Credit Card Payment", -1200.00, "Yesterday", "completed"),
-        WalletActivity("3", "deposit", "Salary Deposit", 3500.00, "Dec 1", "completed"),
-        WalletActivity("4", "transfer", "From Checking", 500.00, "Nov 28", "completed")
-    )
+    val connectedAccounts = remember(allTransactions) {
+        allTransactions
+            .groupBy { it.cardHandle ?: "Unknown Card" } // Group by cardHandle
+            .map { (cardHandle, transactions) ->
+                val balance = transactions.sumOf { it.amount }
+                ConnectedAccount(
+                    id = cardHandle,
+                    name = cardHandle, // Use cardHandle as name for now
+                    type = "Card", // Default to "Card"
+                    balance = balance,
+                    icon = Icons.Filled.CreditCard, // Default icon
+                    color = Color(0xFF8b5cf6) // Default color
+                )
+            }
+    }
 
-    val scheduledTransfers = listOf(
-        ScheduledTransfer("1", "Monthly Savings", 500.00, "Dec 15", "Every month"),
-        ScheduledTransfer("2", "Credit Card Auto-Pay", 1234.56, "Dec 15", "Every month")
-    )
+    val recentActivity = remember(allTransactions) {
+        allTransactions.map { transaction ->
+            WalletActivity(
+                id = transaction.id.toString(),
+                type = transaction.category, // Map category to type
+                description = transaction.merchant,
+                amount = transaction.amount,
+                date = transaction.timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
+                status = "completed" // Assuming all fetched transactions are completed
+            )
+        }
+    }
+
+
 
     LazyColumn(
         modifier = Modifier
@@ -161,71 +165,7 @@ fun WalletScreen() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White.copy(alpha = 0.2f),
-                                onClick = { }
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.ArrowUpward,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            "Send",
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                    Text(
-                                        "Transfer funds",
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                            }
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White.copy(alpha = 0.2f),
-                                onClick = { }
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.ArrowDownward,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            "Request",
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                    Text(
-                                        "Request payment",
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                            }
-                        }
+
                     }
                 }
             }
@@ -313,31 +253,7 @@ fun WalletScreen() {
             }
         }
 
-        // Scheduled Transfers
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Scheduled",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    TextButton(onClick = { }) {
-                        Text("+ New")
-                    }
-                }
 
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    scheduledTransfers.forEach { transfer ->
-                        ScheduledTransferItem(transfer)
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -444,52 +360,4 @@ fun ActivityItem(activity: WalletActivity) {
     }
 }
 
-@Composable
-fun ScheduledTransferItem(transfer: ScheduledTransfer) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        transfer.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        transfer.frequency,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    transfer.amount.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Next: ${transfer.nextDate}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                TextButton(onClick = { }) {
-                    Text("Edit")
-                }
-            }
-        }
-    }
-}
