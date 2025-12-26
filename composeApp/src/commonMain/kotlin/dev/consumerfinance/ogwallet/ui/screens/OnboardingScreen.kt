@@ -13,13 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.auth.BiometricAuth
+import dev.consumerfinance.ogwallet.SmsReader
+import dev.consumerfinance.ogwallet.util.SmsParser
+import dev.consumerfinance.ogwallet.db.TransactionRepository
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import dev.consumerfinance.ogwallet.models.TransactionEntry
+import kotlinx.datetime.Clock
 
 // Data class to hold state during onboarding
 data class InitialSetup(
+    val userName: String = "",
+    val monthlyBudget: Double = 0.0, // New field for monthly budget
     val cardName: String = "",
     val spendGoal: String = "",
     val deadlineDays: String = "90"
@@ -27,10 +39,11 @@ data class InitialSetup(
 
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
     var setup by remember { mutableStateOf(InitialSetup()) }
     var showPINSetup by remember { mutableStateOf(false) }
+    var showPINVerification by remember { mutableStateOf(false) } // New state for PIN verification dialog
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
 
@@ -50,7 +63,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         onSuccess = { key ->
                             println("Onboarding: PIN setup success, unlocking vault")
                             dbManager.unlock(key)
-                            dbManager.completeOnboarding()
+                            dbManager.completeOnboarding(setup.userName)
                             showPINSetup = false
                             onFinished()
                         },
@@ -69,12 +82,34 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         )
     }
 
+    // Show PIN verification dialog if needed
+    if (showPINVerification) {
+        println("Onboarding: Rendering PIN verification dialog")
+        PINVerificationDialog(
+            onDismiss = { showPINVerification = false },
+            onVerify = { pin ->
+                scope.launch {
+                    val result = biometricAuth.verifyMasterPIN(pin)
+                    if (result.isSuccess) {
+                        dbManager.unlock(result.getOrThrow()) // Unlock with the verified key
+                        dbManager.completeOnboarding(setup.userName) // Pass username after unlock
+                        showPINVerification = false
+                        onFinished()
+                    } else {
+                        errorMessage = result.exceptionOrNull()?.message ?: "Incorrect PIN"
+                    }
+                }
+            },
+            errorMessage = errorMessage
+        )
+    }
+
     Scaffold(
         bottomBar = {
             BottomAppBar(
                 actions = {
                     Text(
-                        text = "Step ${pagerState.currentPage + 1} of 3",
+                        text = "Step ${pagerState.currentPage + 1} of 4",
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -84,7 +119,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         onClick = {
                             if (isProcessing) return@FloatingActionButton
 
-                            if (pagerState.currentPage < 2) {
+                            if (pagerState.currentPage < 3) {
                                 scope.launch {
                                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                 }
@@ -97,29 +132,21 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                                     println("Onboarding: Auth result = ${authResult.isSuccess}")
                                     authResult.fold(
                                         onSuccess = { key ->
+                                            // Save user name after successful authentication
                                             println("Onboarding: Auth success, unlocking vault")
                                             dbManager.unlock(key)
-                                            dbManager.completeOnboarding()
+                                            dbManager.completeOnboarding(setup.userName)
                                             onFinished()
                                         },
                                         onFailure = { exception ->
                                             println("Onboarding: Auth failed - ${exception.message}")
-                                            // Check if we need PIN setup
-                                            when (exception.message) {
-                                                "PIN_NOT_SET" -> {
-                                                    println("Onboarding: Showing PIN setup dialog")
-                                                    showPINSetup = true
-                                                }
-                                                "PIN_REQUIRED" -> {
-                                                    // During onboarding, if PIN is required, show PIN entry
-                                                    println("Onboarding: PIN required, showing PIN entry")
-                                                    showPINSetup = true
-                                                }
-                                                else -> {
-                                                    println("Onboarding: Other error - ${exception.message}")
-                                                    errorMessage = exception.message ?: "Authentication failed"
-                                                    isProcessing = false
-                                                }
+                                            // Check if we need PIN setup or verification
+                                            if (biometricAuth.isPINSet()) {
+                                                println("Onboarding: PIN is set, showing PIN verification dialog")
+                                                showPINVerification = true
+                                            } else {
+                                                println("Onboarding: PIN not set, showing PIN setup dialog")
+                                                showPINSetup = true
                                             }
                                         }
                                     )
@@ -127,7 +154,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                             }
                         }
                     ) {
-                        val icon = if (pagerState.currentPage == 2) Icons.Default.Check else Icons.Default.ArrowForward
+                        val icon = if (pagerState.currentPage == 3) Icons.Default.Check else Icons.Default.ArrowForward
                         Icon(icon, contentDescription = "Next")
                     }
                 }
@@ -141,7 +168,12 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         ) { page ->
             when (page) {
                 0 -> WelcomeStep()
-                1 -> SecurityStep()
+                1 -> UserNameStep(
+                    userName = setup.userName,
+                    onUserNameChange = { setup = setup.copy(userName = it) }
+                )
+                2 -> SecurityStep()
+                3 -> SmsScanningStep()
             }
         }
     }
@@ -166,6 +198,29 @@ fun WelcomeStep() {
 
 
 @Composable
+fun UserNameStep(
+    userName: String,
+    onUserNameChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("What's your name?", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = userName,
+            onValueChange = onUserNameChange,
+            label = { Text("Your Name") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+
+@Composable
 fun SecurityStep() {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -182,6 +237,149 @@ fun SecurityStep() {
 }
 
 @Composable
+fun SmsScanningStep() {
+    val transactionRepository = koinInject<TransactionRepository>()
+    val scope = rememberCoroutineScope()
+    var isScanning by remember { mutableStateOf(false) }
+    var savedTransactionCount by remember { mutableStateOf<Int?>(null) }
+    val smsReader = koinInject<SmsReader>()
+    val smsParser = koinInject<SmsParser>() // Inject SmsParser
+
+    // TODO: Need to handle READ_SMS permission request here.
+    // This will likely involve a permission launcher similar to MainActivity.
+    // For now, assume permission is granted or handle it in a more robust way later.
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Scan SMS for Transactions", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "To automatically populate your wallet, we need to scan your SMS messages for bank transactions.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(Modifier.height(24.dp))
+        if (isScanning) {
+            CircularProgressIndicator()
+        } else {
+            Button(onClick = {
+                scope.launch {
+                    isScanning = true
+                    val messages = smsReader.readSmsMessages()
+                    val transactions = messages.mapNotNull { smsParser.parse(it) }
+                    transactions.forEach { match ->
+                        transactionRepository.addTransaction(
+                            TransactionEntry(
+                                id = 0, // Database will generate ID
+                                amount = match.amount,
+                                merchant = match.merchantRaw,
+                                category = "OTHER", // Default category for now
+                                timestamp = Clock.System.now(), // Current time
+                                cardHandle = match.accountHandle
+                            )
+                        )
+                    }
+                    savedTransactionCount = transactions.size
+                    isScanning = false
+                }
+            }) {
+                Text("Scan SMS")
+            }
+        }
+        savedTransactionCount?.let {
+            Spacer(Modifier.height(16.dp))
+            Text("Saved $it transactions")
+        }
+    }
+}
+
+
+@Composable
+fun PINVerificationDialog(
+    onDismiss: () -> Unit,
+    onVerify: (String) -> Unit,
+    errorMessage: String? = null
+) {
+    var pin by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
+    var showPin by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter Master PIN") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    "Biometric authentication failed or is unavailable. Please enter your Master PIN.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                OutlinedTextField(
+                    value = pin,
+                    onValueChange = {
+                        if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                            pin = it
+                            localError = null
+                        }
+                    },
+                    label = { Text("Enter PIN (6 digits)") },
+                    singleLine = true,
+                    visualTransformation = if (showPin) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = showPin,
+                        onCheckedChange = { showPin = it }
+                    )
+                    Text("Show PIN", style = MaterialTheme.typography.bodySmall)
+                }
+
+                if (localError != null || errorMessage != null) {
+                    Text(
+                        text = localError ?: errorMessage ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    when {
+                        pin.length != 6 -> {
+                            localError = "PIN must be exactly 6 digits"
+                        }
+                        else -> {
+                            onVerify(pin)
+                        }
+                    }
+                },
+                enabled = pin.length == 6
+            ) {
+                Text("Verify PIN")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
 fun PINSetupDialog(
     onPINSet: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -191,6 +389,10 @@ fun PINSetupDialog(
     var confirmPin by remember { mutableStateOf("") }
     var showPin by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
+
+    val pinVisualTransformation = remember(showPin) {
+        if (showPin) VisualTransformation.None else PasswordVisualTransformation()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -214,8 +416,7 @@ fun PINSetupDialog(
                         }
                     },
                     label = { Text("Enter PIN (6 digits)") },
-                    visualTransformation = if (showPin) androidx.compose.ui.text.input.VisualTransformation.None
-                                          else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    visualTransformation = pinVisualTransformation,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -230,8 +431,7 @@ fun PINSetupDialog(
                         }
                     },
                     label = { Text("Confirm PIN") },
-                    visualTransformation = if (showPin) androidx.compose.ui.text.input.VisualTransformation.None
-                                          else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    visualTransformation = pinVisualTransformation,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
