@@ -87,7 +87,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "John Doe",
+                    userName,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
