@@ -12,6 +12,11 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import android.os.Handler
+import android.os.Looper
+import android.view.MotionEvent
 import dev.consumerfinance.ogwallet.auth.BiometricAuth
 import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.notifications.BillReminderScheduler
@@ -22,6 +27,21 @@ import org.koin.dsl.module
 class MainActivity : FragmentActivity() {
 
     private val dbManager by inject<DatabaseManager>()
+
+    private val autoLockHandler = Handler(Looper.getMainLooper())
+    private val autoLockRunnable = Runnable {
+        if (dbManager.isUnlocked.value) {
+            dbManager.lock()
+        }
+    }
+
+    private fun resetAutoLockTimer() {
+        autoLockHandler.removeCallbacks(autoLockRunnable)
+        if (dbManager.isUnlocked.value) {
+            val timeout = runBlocking { dbManager.getAutoLockTimeout().first() }
+            autoLockHandler.postDelayed(autoLockRunnable, timeout * 1000)
+        }
+    }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -59,10 +79,26 @@ class MainActivity : FragmentActivity() {
         }
         loadKoinModules(activityModule)
 
-        // Lock vault when app is backgrounded
+        // Lock vault when app is backgrounded or timeout exceeded
         lifecycle.addObserver(LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) {
-                dbManager.lock()
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    // Check if auto-lock timeout has been exceeded
+                    val timeout = runBlocking { dbManager.getAutoLockTimeout().first() }
+                    if (dbManager.unlockTime > 0 &&
+                        System.currentTimeMillis() - dbManager.unlockTime > timeout * 1000) {
+                        dbManager.lock()
+                    } else if (dbManager.isUnlocked.value) {
+                        resetAutoLockTimer()
+                    }
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    autoLockHandler.removeCallbacks(autoLockRunnable)
+                    dbManager.lock()
+                }
+                else -> {
+                    // Ignore other events
+                }
             }
         })
 
@@ -72,6 +108,16 @@ class MainActivity : FragmentActivity() {
         setContent {
             App()
         }
+    }
+
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        resetAutoLockTimer()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        autoLockHandler.removeCallbacks(autoLockRunnable)
     }
 
     private fun requestPermissions() {

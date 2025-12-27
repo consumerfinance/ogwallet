@@ -13,12 +13,16 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
+import kotlinx.datetime.Clock
 
 class DatabaseManager(private val driverFactory: DriverFactory) {
     private var database: OGVault? = null
 
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked = _isUnlocked.asStateFlow()
+
+    var unlockTime: Long = 0
+        private set
 
     fun unlock(passphrase: String, isRetry: Boolean = false) {
         try {
@@ -38,6 +42,7 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             )
             // Create tables if they don't exist
             OGVault.Schema.create(driver)
+            unlockTime = Clock.System.now().toEpochMilliseconds()
             _isUnlocked.value = true
         } catch (e: Exception) {
             // Log the error for debugging
@@ -83,7 +88,7 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             currency_code = currencyCode,
             is_biometric_enabled = true,
             theme_mode = ThemeMode.DARK, // Use the enum directly
-            auto_lock_timeout = 300,
+            auto_lock_timeout = 5,
             monthly_budget = monthlyBudget
         )
     }
@@ -140,8 +145,8 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             ?.asFlow()
             ?.mapToOneOrNull(Dispatchers.Default)
             ?.map { vaultConfig ->
-                vaultConfig?.auto_lock_timeout ?: 300L // Default to 300 seconds if not found
-            } ?: kotlinx.coroutines.flow.flowOf(300L)
+                vaultConfig?.auto_lock_timeout ?: 5L // Default to 5 seconds if not found
+            } ?: kotlinx.coroutines.flow.flowOf(30L)
     }
 
     fun getMonthlyBudget(): Flow<Double> {
@@ -153,6 +158,7 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
 
     fun lock() {
         database = null
+        unlockTime = 0
         _isUnlocked.value = false
     }
 }
