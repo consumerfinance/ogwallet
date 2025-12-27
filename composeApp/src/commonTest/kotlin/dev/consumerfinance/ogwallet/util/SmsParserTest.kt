@@ -12,12 +12,14 @@ import kotlin.test.assertNull
  */
 class SmsParserTest {
 
+    private val smsParser = SmsParser(null) // TransactionRepository not needed for parsing
+
     // ========== HDFC Bank SMS Tests ==========
-    
+
     @Test
     fun testHDFCBank_standardFormat() {
         val sms = "Rs.399.00 spent on HDFC Bank Card XX1234 at AMAZON PRIME on 21-Dec-24. Avl Bal: Rs.10,832.00"
-        val result = SmsParser.parse(sms)
+        val result = smsParser.parse(sms)
         
         assertNotNull(result, "Should parse HDFC SMS")
         assertEquals(399.0, result.amount)
@@ -29,7 +31,7 @@ class SmsParserTest {
     @Test
     fun testHDFCBank_withCommas() {
         val sms = "Rs.1,500.50 spent on HDFC Bank Card XX5678 at FLIPKART on 22-Dec-24"
-        val result = SmsParser.parse(sms)
+        val result = smsParser.parse(sms)
         
         assertNotNull(result, "Should parse HDFC SMS with comma in amount")
         assertEquals(1500.5, result.amount)
@@ -41,7 +43,7 @@ class SmsParserTest {
     @Test
     fun testICICIBank_debitFormat() {
         val sms = "INR 599.00 debited from Card XX5678 at NETFLIX on 22-Dec-24. Available limit: INR 44,803.00"
-        val result = SmsParser.parse(sms)
+        val result = smsParser.parse(sms)
         
         assertNotNull(result, "Should parse ICICI debit SMS")
         assertEquals(599.0, result.amount)
@@ -52,8 +54,8 @@ class SmsParserTest {
     @Test
     fun testICICIBank_alternateFormat() {
         val sms = "Debited Rs.2500.00 from card XX9876 at FLIPKART"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse ICICI alternate format")
         assertEquals(2500.0, result.amount)
         assertEquals("9876", result.accountHandle)
@@ -61,12 +63,12 @@ class SmsParserTest {
     }
 
     // ========== SBI Card SMS Tests ==========
-    
+
     @Test
     fun testSBICard_standardFormat() {
         val sms = "Rs.2,100.00 spent on SBI Card XX9012 at TATA POWER on 23-Dec-24. Available credit: Rs.44,301.00"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse SBI Card SMS")
         assertEquals(2100.0, result.amount)
         assertEquals("9012", result.accountHandle)
@@ -74,12 +76,12 @@ class SmsParserTest {
     }
 
     // ========== Axis Bank SMS Tests ==========
-    
+
     @Test
     fun testAxisBank_debitFormat() {
         val sms = "Dear Customer, Rs.1500.00 debited from your Axis Bank Card ending 3456 at SWIGGY on 24-Dec-24"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse Axis Bank SMS")
         assertEquals(1500.0, result.amount)
         assertEquals("3456", result.accountHandle)
@@ -87,12 +89,12 @@ class SmsParserTest {
     }
 
     // ========== Kotak Bank SMS Tests ==========
-    
+
     @Test
     fun testKotakBank_transactionFormat() {
         val sms = "Transaction of Rs.750 on Kotak Card XXXX7890 at ZOMATO approved. Avl limit: Rs.25,000"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse Kotak Bank SMS")
         assertEquals(750.0, result.amount)
         assertEquals("7890", result.accountHandle)
@@ -100,12 +102,12 @@ class SmsParserTest {
     }
 
     // ========== Citi Bank SMS Tests ==========
-    
+
     @Test
     fun testCitiBank_accountFormat() {
         val sms = "Your Citi Card A/c XX2468 has been debited with Rs.2500 at FLIPKART on 25-Dec-24"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse Citi Bank SMS")
         assertEquals(2500.0, result.amount)
         assertEquals("2468", result.accountHandle)
@@ -113,12 +115,12 @@ class SmsParserTest {
     }
 
     // ========== American Express SMS Tests ==========
-    
+
     @Test
     fun testAmex_endingInFormat() {
         val sms = "American Express Card ending in 1357 charged Rs.5000 at APPLE STORE"
-        val result = SmsParser.parse(sms)
-        
+        val result = smsParser.parse(sms)
+
         assertNotNull(result, "Should parse Amex SMS")
         assertEquals(5000.0, result.amount)
         assertEquals("1357", result.accountHandle)

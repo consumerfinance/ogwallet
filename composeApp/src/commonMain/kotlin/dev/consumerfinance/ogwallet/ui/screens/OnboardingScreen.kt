@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import dev.consumerfinance.ogwallet.models.TransactionEntry
+import dev.consumerfinance.ogwallet.models.TransactionType
 import kotlinx.datetime.Clock
 
 // Data class to hold state during onboarding
@@ -413,10 +414,14 @@ fun SmsScanningStep() {
                     val messages = smsReader.readSmsMessages()
                     val transactions = messages.mapNotNull { smsParser.parse(it) }
                     transactions.forEach { match ->
+                        val amount = when (match.transactionType) {
+                            TransactionType.DEBIT -> match.amount
+                            TransactionType.CREDIT -> -match.amount // Negative for credits/refunds
+                        }
                         transactionRepository.addTransaction(
                             TransactionEntry(
                                 id = 0, // Database will generate ID
-                                amount = match.amount,
+                                amount = amount,
                                 merchant = match.merchantRaw,
                                 category = "OTHER", // Default category for now
                                 timestamp = Clock.System.now(), // Current time
