@@ -33,6 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType // New import
 
 import androidx.activity.compose.BackHandler // Import BackHandler
 import dev.consumerfinance.ogwallet.db.DatabaseManager // Moved import
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 
 @Composable
 fun SettingsScreen() {
@@ -43,6 +46,7 @@ fun SettingsScreen() {
     var showThemeDialog by remember { mutableStateOf(false) }
     var showChangePinDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showAutoLockTimeoutDialog by remember { mutableStateOf(false) }
 
     var exportedDataContent by remember { mutableStateOf<String?>(null) } // To hold data before saving
 
@@ -99,12 +103,14 @@ fun SettingsScreen() {
         SettingsScreenRoute.MAIN_SETTINGS -> {
             SettingsScreenContent(
                 isAndroid = isAndroid,
+                context = context,
                 onOpenSmsScanner = { currentRoute = SettingsScreenRoute.SMS_SCANNER },
                 onOpenMboxImport = { currentRoute = SettingsScreenRoute.MBOX_IMPORT },
                 onExportDataClicked = { showExportDataDialog = true },
                 onOpenThemeSelector = { showThemeDialog = true },
                 onChangeMasterPinClicked = { showChangePinDialog = true },
                 onOpenCurrencySelector = { showCurrencyDialog = true },
+                onOpenAutoLockTimeoutSelector = { showAutoLockTimeoutDialog = true },
                 dbManager = dbManager
             )
 
@@ -179,6 +185,19 @@ fun SettingsScreen() {
                     }
                 )
             }
+
+            if (showAutoLockTimeoutDialog) {
+                AutoLockTimeoutDialog(
+                    onDismiss = { showAutoLockTimeoutDialog = false },
+                    onTimeoutSelected = { timeoutSeconds ->
+                        scope.launch {
+                            dbManager.updateAutoLockTimeout(timeoutSeconds.toLong()) // Save timeout preference
+                            println("Selected auto lock timeout: $timeoutSeconds seconds")
+                        }
+                        showAutoLockTimeoutDialog = false
+                    }
+                )
+            }
         }
     }
 }
@@ -188,12 +207,14 @@ fun SettingsScreen() {
 @Composable
 private fun SettingsScreenContent(
     isAndroid: Boolean,
+    context: Context,
     onOpenSmsScanner: () -> Unit,
     onOpenMboxImport: () -> Unit,
     onExportDataClicked: () -> Unit,
     onOpenThemeSelector: () -> Unit,
     onChangeMasterPinClicked: () -> Unit, // New parameter
     onOpenCurrencySelector: () -> Unit, // Add this parameter
+    onOpenAutoLockTimeoutSelector: () -> Unit, // New parameter
     dbManager: DatabaseManager // New parameter
 ) {
     LazyColumn(
@@ -270,7 +291,7 @@ private fun SettingsScreenContent(
                     icon = Icons.Default.Security,
                     title = "Auto-lock Timeout",
                     subtitle = "Lock app after inactivity",
-                    onClick = { /* TODO */ }
+                    onClick = onOpenAutoLockTimeoutSelector
                 )
             }
         }
@@ -289,14 +310,19 @@ private fun SettingsScreenContent(
                     icon = Icons.Default.Notifications,
                     title = "Notifications",
                     subtitle = "Manage notification preferences",
-                    onClick = { /* TODO */ }
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    }
                 )
                 
                 SettingsItem(
                     icon = Icons.Default.Language,
                     title = "Currency",
                     subtitle = "Default currency for transactions",
-                    onClick = { /* TODO */ }
+                    onClick = onOpenCurrencySelector
                 )
             }
         }
@@ -607,6 +633,63 @@ fun CurrencySelectionDialog(
         },
         confirmButton = {
             Button(onClick = { onCurrencySelected(selectedOption) }) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun AutoLockTimeoutDialog(
+    onDismiss: () -> Unit,
+    onTimeoutSelected: (Int) -> Unit
+) {
+    val timeoutOptions = listOf(
+        30 to "30 seconds",
+        60 to "1 minute",
+        300 to "5 minutes",
+        600 to "10 minutes",
+        1800 to "30 minutes",
+        0 to "Never"
+    )
+    var selectedOption by remember { mutableStateOf(300) } // Default to 5 minutes
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Auto-lock Timeout") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                timeoutOptions.forEach { (seconds, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedOption = seconds },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (selectedOption == seconds),
+                            onClick = { selectedOption = seconds }
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onTimeoutSelected(selectedOption) }) {
                 Text("Confirm")
             }
         },

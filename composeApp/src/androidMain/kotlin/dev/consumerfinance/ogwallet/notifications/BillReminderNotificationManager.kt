@@ -13,6 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.consumerfinance.ogwallet.MainActivity
 import dev.consumerfinance.ogwallet.R
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 
 class BillReminderNotificationManager(private val context: Context) {
     
@@ -46,7 +47,8 @@ class BillReminderNotificationManager(private val context: Context) {
         cardName: String,
         dueAmount: Double,
         dueDate: String,
-        daysRemaining: Int
+        daysRemaining: Int,
+        currencyCode: String = "INR"
     ) {
         // Check for notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -78,7 +80,7 @@ class BillReminderNotificationManager(private val context: Context) {
             else -> "📅 Bill Due in $daysRemaining Days"
         }
         
-        val message = "$cardName payment of ₹${String.format("%.2f", dueAmount)} is due on $dueDate"
+        val message = "$cardName payment of ${formatCurrency(dueAmount, currencyCode)} is due on $dueDate"
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info) // TODO: Replace with app icon

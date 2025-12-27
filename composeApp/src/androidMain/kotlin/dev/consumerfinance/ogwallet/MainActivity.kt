@@ -9,12 +9,19 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import dev.consumerfinance.ogwallet.auth.BiometricAuth
+import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.notifications.BillReminderScheduler
+import org.koin.android.ext.android.inject
 import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
 
 class MainActivity : FragmentActivity() {
+
+    private val dbManager by inject<DatabaseManager>()
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -51,6 +58,13 @@ class MainActivity : FragmentActivity() {
             single { BiometricAuth(this@MainActivity) }
         }
         loadKoinModules(activityModule)
+
+        // Lock vault when app is backgrounded
+        lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                dbManager.lock()
+            }
+        })
 
         // Request permissions if not granted
         requestPermissions()

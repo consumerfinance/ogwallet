@@ -20,14 +20,17 @@ import dev.consumerfinance.ogwallet.models.CreditCard
 import dev.consumerfinance.ogwallet.db.TransactionRepository
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
-import dev.consumerfinance.ogwallet.util.formatCurrency
+import dev.consumerfinance.ogwallet.utils.formatCurrency
+import dev.consumerfinance.ogwallet.db.DatabaseManager
 
 
 @Preview
 @Composable
 fun CreditCardsScreen() {
     val repository: TransactionRepository = koinInject()
+    val dbManager: DatabaseManager = koinInject()
     val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
 
     var showCardNumbers by remember { mutableStateOf(mutableMapOf<String, Boolean>()) }
 
@@ -126,7 +129,7 @@ fun CreditCardsScreen() {
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            "₹${formatCurrency(totalBalance)}",
+                            formatCurrency(totalBalance, currencyCode),
                             color = Color.White,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
@@ -224,6 +227,7 @@ fun CreditCardsScreen() {
             items(cards) { card ->
                 CreditCardDetailItem(
                     card = card,
+                    currencyCode = currencyCode,
                     isNumberVisible = showCardNumbers[card.id] ?: false,
                     onToggleVisibility = {
                         showCardNumbers = showCardNumbers.toMutableMap().apply {
@@ -267,6 +271,7 @@ fun CreditCardsScreen() {
 @Composable
 fun CreditCardDetailItem(
     card: CreditCard,
+    currencyCode: String,
     isNumberVisible: Boolean,
     onToggleVisibility: () -> Unit
 ) {
@@ -364,9 +369,9 @@ fun CreditCardDetailItem(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                DetailRow("Balance", card.balance.toString())
-                DetailRow("Available", "$${card.availableCredit.toInt().toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")}")
-                DetailRow("Credit Limit", "$${card.limit.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")}")
+                DetailRow("Balance", formatCurrency(card.balance, currencyCode))
+                DetailRow("Available", formatCurrency(card.availableCredit, currencyCode))
+                DetailRow("Credit Limit", formatCurrency(card.limit.toDouble(), currencyCode))
 
                 if (card.nextPayment != null) {
                     HorizontalDivider()
@@ -386,19 +391,6 @@ fun CreditCardDetailItem(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = { },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Lock Card")
-                    }
                     OutlinedButton(
                         onClick = { },
                         modifier = Modifier.weight(1f),

@@ -2,6 +2,7 @@ package dev.consumerfinance.ogwallet.auth
 
 expect class BiometricAuth {
     suspend fun authenticate(): Result<String> // Returns the derived key for SQLCipher
+    fun isBiometricAvailable(): Boolean
 
     // PIN management methods (for desktop platforms)
     fun setupMasterPIN(pin: String): Result<String>

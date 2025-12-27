@@ -13,8 +13,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.services.MboxImportService
 import dev.consumerfinance.ogwallet.util.MboxImportResult
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.io.BufferedReader
@@ -24,9 +26,11 @@ import java.io.InputStreamReader
 @Composable
 fun MboxImportScreen(onBack: () -> Unit) {
     val repository = koinInject<TransactionRepository>()
+    val dbManager = koinInject<DatabaseManager>()
     val importService = remember { MboxImportService(repository) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
 
     var isImporting by remember { mutableStateOf(false) }
     var importResult by remember { mutableStateOf<MboxImportResult?>(null) }
@@ -206,7 +210,7 @@ fun MboxImportScreen(onBack: () -> Unit) {
                         ) {
                             Text("Total amount:")
                             Text(
-                                "$${result.totalAmount}",
+                                formatCurrency(result.totalAmount, currencyCode),
                                 fontWeight = FontWeight.Bold
                             )
                         }

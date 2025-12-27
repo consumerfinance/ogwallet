@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.models.budget.Alert
 import dev.consumerfinance.ogwallet.models.transactions.SpendingCategory
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -38,9 +40,11 @@ private fun getCategoryColor(category: String): Color {
 @Composable
 fun BudgetAnalyticsScreen() {
     val repository: TransactionRepository = koinInject()
+    val dbManager: DatabaseManager = koinInject()
     var timeRange by remember { mutableStateOf("month") } // Moved to before usage
     val transactions by repository.getTransactionsByTimeRange(timeRange).collectAsState(initial = emptyList())
     val categoryBreakdown by repository.getSpendingBreakdownByTimeRange(timeRange).collectAsState(initial = emptyList())
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
 
     // Define budgets for each category
     val categoryBudgets = mapOf(
@@ -73,7 +77,7 @@ fun BudgetAnalyticsScreen() {
         Alert(
             id = category.name.hashCode(),
             category = category.name,
-            message = "Exceeded ${category.name} budget by ₹$overage",
+            message = "Exceeded ${category.name} budget by ${formatCurrency(overage.toDouble(), currencyCode)}",
             severity = "high"
         )
     }
@@ -117,21 +121,21 @@ fun BudgetAnalyticsScreen() {
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     TimeRangeButton(
-                        text = "Week",
-                        selected = timeRange == "week",
-                        onClick = { timeRange = "week" },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TimeRangeButton(
-                        text = "Month",
+                        text = "Monthly",
                         selected = timeRange == "month",
                         onClick = { timeRange = "month" },
                         modifier = Modifier.weight(1f)
                     )
                     TimeRangeButton(
-                        text = "Year",
+                        text = "Yearly",
                         selected = timeRange == "year",
                         onClick = { timeRange = "year" },
+                        modifier = Modifier.weight(1f)
+                    )
+                    TimeRangeButton(
+                        text = "Weekly",
+                        selected = timeRange == "week",
+                        onClick = { timeRange = "week" },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -154,13 +158,13 @@ fun BudgetAnalyticsScreen() {
                         icon = Icons.Filled.TrendingDown,
                         iconColor = Color(0xFFef4444),
                         label = "Total Spent",
-                        value = "₹$totalSpent"
+                        value = formatCurrency(totalSpent.toDouble(), currencyCode)
                     )
                     StatCard(
                         icon = Icons.Filled.TrendingUp,
                         iconColor = if (budgetRemaining >= 0) Color(0xFF10b981) else Color(0xFFef4444),
                         label = "Remaining",
-                        value = "₹${if (budgetRemaining >= 0) budgetRemaining else -budgetRemaining}"
+                        value = formatCurrency(if (budgetRemaining >= 0) budgetRemaining.toDouble() else -budgetRemaining.toDouble(), currencyCode)
                     )
                 }
                 Column(
@@ -171,7 +175,7 @@ fun BudgetAnalyticsScreen() {
                         icon = Icons.Filled.Payments,
                         iconColor = Color(0xFF3b82f6),
                         label = "Budget",
-                        value = "₹$totalBudget"
+                        value = formatCurrency(totalBudget.toDouble(), currencyCode)
                     )
                     StatCard(
                         icon = Icons.Filled.Receipt,
@@ -270,7 +274,7 @@ fun BudgetAnalyticsScreen() {
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        "₹${category.amount}",
+                                        formatCurrency(category.amount.toDouble(), currencyCode),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -300,7 +304,7 @@ fun BudgetAnalyticsScreen() {
 
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         spendingByCategory.forEach { category ->
-                            CategoryBudgetItem(category)
+                            CategoryBudgetItem(category, currencyCode)
                         }
                     }
 
@@ -396,7 +400,7 @@ fun StatCard(
 }
 
 @Composable
-fun CategoryBudgetItem(category: SpendingCategory) {
+fun CategoryBudgetItem(category: SpendingCategory, currencyCode: String) {
     val percentage = (category.amount.toFloat() / category.budget.toFloat() * 100).toInt()
     val isOverBudget = percentage > 100
 
@@ -412,12 +416,12 @@ fun CategoryBudgetItem(category: SpendingCategory) {
             )
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "$${category.amount}",
+                    formatCurrency(category.amount.toDouble(), currencyCode),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isOverBudget) Color(0xFFef4444) else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "/ $${category.budget}",
+                    "/ ${formatCurrency(category.budget.toDouble(), currencyCode)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import dev.consumerfinance.ogwallet.getPlatform
 import dev.consumerfinance.ogwallet.ui.screens.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -30,7 +31,7 @@ fun MainNavigationContainer() {
     val navigationItems = listOf(
         NavigationItem("Home", Icons.Filled.Home, "home"),
         NavigationItem("Cards", Icons.Filled.CreditCard, "cards"),
-        NavigationItem("Wallet", Icons.Filled.AccountBalanceWallet, "wallet"),
+        NavigationItem("Budget", Icons.Filled.AccountBalanceWallet, "wallet"),
 
         NavigationItem("Stats", Icons.Filled.TrendingUp, "stats"),
         NavigationItem("Settings", Icons.Filled.Settings, "settings")

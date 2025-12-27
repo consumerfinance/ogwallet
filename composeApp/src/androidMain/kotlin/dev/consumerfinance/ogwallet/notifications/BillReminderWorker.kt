@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dev.consumerfinance.ogwallet.db.BillRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.ogwallet.db.Credit_card_bill
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,6 +23,7 @@ class BillReminderWorker(
 ) : CoroutineWorker(context, params), KoinComponent {
 
     private val billRepository: BillRepository by inject()
+    private val dbManager: DatabaseManager by inject()
 
     companion object {
         const val WORK_NAME = "bill_reminder_check"
@@ -55,12 +57,14 @@ class BillReminderWorker(
                 if (daysRemaining <= REMINDER_DAYS_BEFORE) {
                     Log.d(TAG, "Sending reminder for bill ${bill.id}: ${bill.card_name}")
 
+                    val currencyCode = dbManager.getCurrencyCodeSync()
                     notificationManager.sendBillReminderNotification(
                         billId = bill.id.toInt(),
                         cardName = bill.card_name,
                         dueAmount = bill.total_amount,
                         dueDate = formatDate(dueDate),
-                        daysRemaining = daysRemaining
+                        daysRemaining = daysRemaining,
+                        currencyCode = currencyCode
                     )
 
                     // Mark reminder as sent

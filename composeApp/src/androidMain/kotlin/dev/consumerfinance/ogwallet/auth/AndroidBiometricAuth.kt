@@ -17,6 +17,14 @@ import javax.crypto.spec.SecretKeySpec
 import java.util.UUID
 
 actual class BiometricAuth(private val activity: FragmentActivity) {
+    actual fun isBiometricAvailable(): Boolean {
+        val biometricManager = BiometricManager.from(activity)
+        return biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        ) == BiometricManager.BIOMETRIC_SUCCESS
+    }
+
     actual suspend fun authenticate(): Result<String> {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Unlock OGWallet")

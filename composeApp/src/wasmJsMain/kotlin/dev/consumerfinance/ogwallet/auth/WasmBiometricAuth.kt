@@ -9,7 +9,11 @@ import kotlinx.browser.window
  * For now, we use a PIN-based approach similar to desktop until WebAuthn integration is complete.
  */
 actual class BiometricAuth {
-    
+
+    actual fun isBiometricAvailable(): Boolean {
+        return false // WebAuthn integration not yet implemented, use PIN fallback
+    }
+
     actual suspend fun authenticate(): Result<String> {
         return try {
             // Check if PIN is set

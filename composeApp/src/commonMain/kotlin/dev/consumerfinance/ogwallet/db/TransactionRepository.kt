@@ -18,25 +18,21 @@ class TransactionRepository(private val dbManager: DatabaseManager) {
     private fun currentInstant(): Instant = Clock.System.now()
 
     private fun getStartAndEndOfRange(timeRange: String, now: Instant): Pair<Instant, Instant> {
-        val localDate = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
         return when (timeRange) {
             "week" -> {
-                val startOfWeek = localDate.minus(localDate.dayOfWeek.isoDayNumber - 1, DateTimeUnit.DAY)
-                val endOfWeek = startOfWeek.plus(6, DateTimeUnit.DAY).atTime(23, 59, 59, 999999999).toInstant(TimeZone.currentSystemDefault())
-                startOfWeek.atStartOfDayIn(TimeZone.currentSystemDefault()) to endOfWeek
+                val start = now.minus(7.days)
+                start to now
             }
             "month" -> {
-                val startOfMonth = LocalDate(localDate.year, localDate.month, 1)
-                val endOfMonth = startOfMonth.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY).atTime(23, 59, 59, 999999999).toInstant(TimeZone.currentSystemDefault())
-                startOfMonth.atStartOfDayIn(TimeZone.currentSystemDefault()) to endOfMonth
+                val start = now.minus(30.days)
+                start to now
             }
             "year" -> {
-                val startOfYear = LocalDate(localDate.year, Month.JANUARY, 1)
-                val endOfYear = startOfYear.plus(1, DateTimeUnit.YEAR).minus(1, DateTimeUnit.DAY).atTime(23, 59, 59, 999999999).toInstant(TimeZone.currentSystemDefault())
-                startOfYear.atStartOfDayIn(TimeZone.currentSystemDefault()) to endOfYear
+                val start = now.minus(365.days)
+                start to now
             }
             else -> { // All time
-                Instant.fromEpochMilliseconds(0) to now.plus(DatePeriod(years = 100), TimeZone.currentSystemDefault()) // Effectively "all time"
+                Instant.fromEpochMilliseconds(0) to Instant.fromEpochMilliseconds(Long.MAX_VALUE / 2) // Effectively "all time"
             }
         }
     }

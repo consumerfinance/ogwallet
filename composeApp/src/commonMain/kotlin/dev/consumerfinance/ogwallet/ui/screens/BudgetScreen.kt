@@ -20,6 +20,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.abs
 import org.koin.compose.koinInject
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 import dev.consumerfinance.ogwallet.models.TransactionEntry
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -48,7 +50,9 @@ data class WalletActivity(
 @Composable
 fun BudgetScreen() {
     val transactionRepository = koinInject<TransactionRepository>()
+    val dbManager: DatabaseManager = koinInject()
     val allTransactions by transactionRepository.getAllTransactions().collectAsState(emptyList())
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
 
     val walletBalance = remember(allTransactions) {
         allTransactions.sumOf { it.amount }
@@ -155,7 +159,7 @@ fun BudgetScreen() {
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 Text(
-                                    walletBalance.toString(),
+                                    formatCurrency(walletBalance, currencyCode),
                                     color = Color.White,
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold
@@ -205,7 +209,7 @@ fun BudgetScreen() {
                 ) {
                     Column {
                         connectedAccounts.forEachIndexed { index, account ->
-                            AccountItem(account)
+                            AccountItem(account, currencyCode)
                             if (index < connectedAccounts.size - 1) {
                                 HorizontalDivider()
                             }
@@ -243,7 +247,7 @@ fun BudgetScreen() {
                 ) {
                     Column {
                         recentActivity.forEachIndexed { index, activity ->
-                            ActivityItem(activity)
+                            ActivityItem(activity, currencyCode)
                             if (index < recentActivity.size - 1) {
                                 HorizontalDivider()
                             }
@@ -258,7 +262,7 @@ fun BudgetScreen() {
 }
 
 @Composable
-fun AccountItem(account: ConnectedAccount) {
+fun AccountItem(account: ConnectedAccount, currencyCode: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -299,7 +303,7 @@ fun AccountItem(account: ConnectedAccount) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (account.balance < 0) "-" else  abs(account.balance).toString(),
+                formatCurrency(abs(account.balance), currencyCode),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = if (account.balance < 0) Color(0xFFef4444) else MaterialTheme.colorScheme.onSurface
@@ -315,7 +319,7 @@ fun AccountItem(account: ConnectedAccount) {
 }
 
 @Composable
-fun ActivityItem(activity: WalletActivity) {
+fun ActivityItem(activity: WalletActivity, currencyCode: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -352,10 +356,10 @@ fun ActivityItem(activity: WalletActivity) {
         }
 
         Text(
-            "${if (activity.amount > 0) "+" else "-"}$${abs(activity.amount)}",
+            formatCurrency(abs(activity.amount), currencyCode),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = if (activity.amount > 0) Color(0xFF10b981) else MaterialTheme.colorScheme.onSurface
+            color = if (activity.amount < 0) Color(0xFFef4444) else if (activity.amount > 0) Color(0xFF10b981) else MaterialTheme.colorScheme.onSurface
         )
     }
 }

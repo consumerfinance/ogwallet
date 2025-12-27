@@ -22,17 +22,6 @@ fun App() {
     val dbManager = koinInject<DatabaseManager>()
     val isUnlocked by dbManager.isUnlocked.collectAsState()
 
-    // Check if onboarding is complete by checking if vault_config exists
-    // We need to check this after the vault is unlocked
-    var isOnboardingComplete by remember { mutableStateOf<Boolean?>(null) }
-
-    // Check onboarding status when vault is unlocked
-    LaunchedEffect(isUnlocked) {
-        if (isUnlocked && isOnboardingComplete == null) {
-            isOnboardingComplete = dbManager.isOnboardingComplete()
-        }
-    }
-
     val currentThemeMode by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
     val useDarkTheme = when (currentThemeMode) {
         ThemeMode.LIGHT -> false
@@ -43,26 +32,14 @@ fun App() {
     MaterialTheme(colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme) {
         Surface {
             when {
-                // Show lock screen first if not unlocked
                 !isUnlocked -> {
                     LockScreen(dbManager)
                 }
-                // After unlocking, check if onboarding is needed
-                isOnboardingComplete == false -> {
-                    OnboardingScreen(onFinished = { isOnboardingComplete = true })
+                isUnlocked && !dbManager.isOnboardingComplete() -> {
+                    OnboardingScreen(onFinished = {})
                 }
-                // Show main app if onboarding is complete
-                isOnboardingComplete == true -> {
-                    MainNavigationContainer()
-                }
-                // Loading state while checking onboarding status
                 else -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    MainNavigationContainer()
                 }
             }
         }

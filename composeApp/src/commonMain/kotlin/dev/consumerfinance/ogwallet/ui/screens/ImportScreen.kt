@@ -16,8 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.services.MboxImportService
 import dev.consumerfinance.ogwallet.util.MboxImportResult
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 import dev.consumerfinance.ogwallet.getPlatform
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -49,9 +51,11 @@ private fun ImportScreenContent(
     onOpenSmsScanner: () -> Unit
 ) {
     val repository = koinInject<TransactionRepository>()
+    val dbManager = koinInject<DatabaseManager>()
     val importService = remember { MboxImportService(repository) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
 
     var isImporting by remember { mutableStateOf(false) }
     var importResult by remember { mutableStateOf<MboxImportResult?>(null) }
@@ -198,7 +202,7 @@ private fun ImportScreenContent(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
-                    Text("Total Amount: ₹${result.totalAmount}")
+                    Text("Total Amount: ${formatCurrency(result.totalAmount, currencyCode)}")
                 }
             }
         }

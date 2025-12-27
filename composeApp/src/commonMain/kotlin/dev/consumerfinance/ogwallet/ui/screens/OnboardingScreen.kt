@@ -34,18 +34,21 @@ data class InitialSetup(
     val monthlyBudget: Double = 0.0, // New field for monthly budget
     val cardName: String = "",
     val spendGoal: String = "",
-    val deadlineDays: String = "90"
+    val deadlineDays: String = "90",
+    val pin: String = "",
+    val confirmPin: String = ""
 )
 
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
-    val pagerState = rememberPagerState(pageCount = { 4 })
+    val pagerState = rememberPagerState(pageCount = { 5 })
     val scope = rememberCoroutineScope()
     var setup by remember { mutableStateOf(InitialSetup()) }
     var showPINSetup by remember { mutableStateOf(false) }
     var showPINVerification by remember { mutableStateOf(false) } // New state for PIN verification dialog
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
+    var showPin by remember { mutableStateOf(false) }
 
     val dbManager = koinInject<DatabaseManager>()
     val biometricAuth = koinInject<BiometricAuth>()
@@ -77,6 +80,8 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             onDismiss = {
                 println("Onboarding: PIN setup dismissed")
                 showPINSetup = false
+                isProcessing = false
+                errorMessage = null
             },
             errorMessage = errorMessage
         )
@@ -86,7 +91,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     if (showPINVerification) {
         println("Onboarding: Rendering PIN verification dialog")
         PINVerificationDialog(
-            onDismiss = { showPINVerification = false },
+            onDismiss = {
+                showPINVerification = false
+                isProcessing = false
+                errorMessage = null
+            },
             onVerify = { pin ->
                 scope.launch {
                     val result = biometricAuth.verifyMasterPIN(pin)
@@ -109,7 +118,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             BottomAppBar(
                 actions = {
                     Text(
-                        text = "Step ${pagerState.currentPage + 1} of 4",
+                        text = "Step ${pagerState.currentPage + 1} of 5",
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -119,42 +128,87 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         onClick = {
                             if (isProcessing) return@FloatingActionButton
 
-                            if (pagerState.currentPage < 3) {
+                            if (pagerState.currentPage == 3) {
+                                // PIN setup step
+                                when {
+                                    setup.pin.length != 6 -> {
+                                        errorMessage = "PIN must be exactly 6 digits"
+                                    }
+                                    setup.pin != setup.confirmPin -> {
+                                        errorMessage = "PINs do not match"
+                                    }
+                                    else -> {
+                                        isProcessing = true
+                                        scope.launch {
+                                            val result = biometricAuth.setupMasterPIN(setup.pin)
+                                            println("Onboarding: Setup result = ${result.isSuccess}")
+                                            result.fold(
+                                                onSuccess = { key ->
+                                                    println("Onboarding: PIN setup success")
+                                                    errorMessage = null
+                                                    scope.launch {
+                                                        pagerState.animateScrollToPage(4)
+                                                    }
+                                                    isProcessing = false
+                                                },
+                                                onFailure = { exception ->
+                                                    println("Onboarding: PIN setup failed - ${exception.message}")
+                                                    errorMessage = exception.message ?: "Failed to setup PIN"
+                                                    isProcessing = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            } else if (pagerState.currentPage < 4) {
                                 scope.launch {
                                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                 }
                             } else {
                                 // FINAL STEP: Initialize the secure vault
                                 isProcessing = true
-                                println("Onboarding: Final step - attempting authentication")
-                                scope.launch {
-                                    val authResult = biometricAuth.authenticate()
-                                    println("Onboarding: Auth result = ${authResult.isSuccess}")
-                                    authResult.fold(
-                                        onSuccess = { key ->
-                                            // Save user name after successful authentication
-                                            println("Onboarding: Auth success, unlocking vault")
-                                            dbManager.unlock(key)
-                                            dbManager.completeOnboarding(setup.userName)
-                                            onFinished()
-                                        },
-                                        onFailure = { exception ->
-                                            println("Onboarding: Auth failed - ${exception.message}")
-                                            // Check if we need PIN setup or verification
-                                            if (biometricAuth.isPINSet()) {
-                                                println("Onboarding: PIN is set, showing PIN verification dialog")
-                                                showPINVerification = true
-                                            } else {
-                                                println("Onboarding: PIN not set, showing PIN setup dialog")
-                                                showPINSetup = true
+                                println("Onboarding: Final step - checking biometric availability")
+                                if (biometricAuth.isBiometricAvailable()) {
+                                    println("Onboarding: Biometric available, attempting authentication")
+                                    scope.launch {
+                                        val authResult = biometricAuth.authenticate()
+                                        println("Onboarding: Auth result = ${authResult.isSuccess}")
+                                        authResult.fold(
+                                            onSuccess = { key ->
+                                                // Save user name after successful authentication
+                                                println("Onboarding: Auth success, unlocking vault")
+                                                dbManager.unlock(key)
+                                                dbManager.completeOnboarding(setup.userName)
+                                                onFinished()
+                                            },
+                                            onFailure = { exception ->
+                                                println("Onboarding: Auth failed - ${exception.message}")
+                                                // Check if we need PIN setup or verification
+                                                if (biometricAuth.isPINSet()) {
+                                                    println("Onboarding: PIN is set, showing PIN verification dialog")
+                                                    showPINVerification = true
+                                                } else {
+                                                    println("Onboarding: PIN not set, showing PIN setup dialog")
+                                                    showPINSetup = true
+                                                }
                                             }
-                                        }
-                                    )
+                                        )
+                                    }
+                                } else {
+                                    println("Onboarding: Biometric not available, checking PIN")
+                                    // Biometric not available, use PIN
+                                    if (biometricAuth.isPINSet()) {
+                                        println("Onboarding: PIN is set, showing PIN verification dialog")
+                                        showPINVerification = true
+                                    } else {
+                                        println("Onboarding: PIN not set, showing PIN setup dialog")
+                                        showPINSetup = true
+                                    }
                                 }
                             }
                         }
                     ) {
-                        val icon = if (pagerState.currentPage == 3) Icons.Default.Check else Icons.Default.ArrowForward
+                        val icon = if (pagerState.currentPage == 4) Icons.Default.Check else Icons.Default.ArrowForward
                         Icon(icon, contentDescription = "Next")
                     }
                 }
@@ -173,7 +227,16 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     onUserNameChange = { setup = setup.copy(userName = it) }
                 )
                 2 -> SecurityStep()
-                3 -> SmsScanningStep()
+                3 -> PINSetupStep(
+                    pin = setup.pin,
+                    onPinChange = { setup = setup.copy(pin = it) },
+                    confirmPin = setup.confirmPin,
+                    onConfirmPinChange = { setup = setup.copy(confirmPin = it) },
+                    showPin = showPin,
+                    onShowPinChange = { showPin = it },
+                    errorMessage = errorMessage
+                )
+                4 -> SmsScanningStep()
             }
         }
     }
@@ -233,6 +296,86 @@ fun SecurityStep() {
                     "No one, not even us, can see your transactions.",
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+fun PINSetupStep(
+    pin: String,
+    onPinChange: (String) -> Unit,
+    confirmPin: String,
+    onConfirmPinChange: (String) -> Unit,
+    showPin: Boolean,
+    onShowPinChange: (Boolean) -> Unit,
+    errorMessage: String?
+) {
+    val pinVisualTransformation = remember(showPin) {
+        if (showPin) VisualTransformation.None else PasswordVisualTransformation()
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Set Up Master PIN", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Create a 6-digit PIN to secure your vault",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = pin,
+            onValueChange = {
+                if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                    onPinChange(it)
+                }
+            },
+            label = { Text("Enter PIN (6 digits)") },
+            visualTransformation = pinVisualTransformation,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = confirmPin,
+            onValueChange = {
+                if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                    onConfirmPinChange(it)
+                }
+            },
+            label = { Text("Confirm PIN") },
+            visualTransformation = pinVisualTransformation,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = showPin,
+                onCheckedChange = onShowPinChange
+            )
+            Text("Show PIN", style = MaterialTheme.typography.bodySmall)
+        }
+
+        if (errorMessage != null) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
 

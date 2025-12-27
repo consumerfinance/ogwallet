@@ -6,7 +6,11 @@ import kotlinx.browser.window
  * JavaScript implementation of BiometricAuth using localStorage for PIN storage.
  */
 actual class BiometricAuth {
-    
+
+    actual fun isBiometricAvailable(): Boolean {
+        return false // Biometric authentication not available on web platforms
+    }
+
     actual suspend fun authenticate(): Result<String> {
         return try {
             // Check if PIN is set

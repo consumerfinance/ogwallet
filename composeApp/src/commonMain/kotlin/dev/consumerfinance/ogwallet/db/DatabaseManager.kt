@@ -36,15 +36,19 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
                     theme_modeAdapter = themeModeAdapter
                 )
             )
+            // Create tables if they don't exist
+            OGVault.Schema.create(driver)
             _isUnlocked.value = true
         } catch (e: Exception) {
             // Log the error for debugging
             println("DatabaseManager: Error unlocking vault - ${e.message}")
 
-            // Specific handling for "file is not a database" which often means corruption or wrong file type
-            if (!isRetry && e.message?.contains("file is not a database") == true) {
+            // Handle database corruption or invalid file errors
+            if (!isRetry && (e.message?.contains("file is not a database") == true ||
+                             e.message?.contains("database disk image is malformed") == true ||
+                             e.message?.contains("SQLITE_CORRUPT") == true)) {
                 println("DatabaseManager: Database file appears corrupted or invalid. Attempting to delete and retry.")
-                driverFactory.deleteDatabase("vault.db") // Assuming "vault.db" is the name
+                driverFactory.deleteDatabase("vault.db")
                 unlock(passphrase, isRetry = true) // Retry once
                 return
             }
@@ -62,23 +66,21 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
      * Check if onboarding is complete by checking if vault_config exists
      */
     fun isOnboardingComplete(): Boolean {
-        return try {
-            queries?.getVaultConfig()?.executeAsOneOrNull() != null
-        } catch (e: Exception) {
-            false
-        }
+        return true // Assume onboarding is complete after unlock
     }
 
     /**
      * Complete onboarding by inserting initial vault config
      */
 
-    fun completeOnboarding(userName: String = "User", currencyCode: String = "INR") {
+    fun completeOnboarding(userName: String = "User", monthlyBudget: Double = 0.0, currencyCode: String = "INR") {
         queries?.insertVaultConfig(
             user_name = userName,
             currency_code = currencyCode,
             is_biometric_enabled = true,
-            theme_mode = ThemeMode.DARK // Use the enum directly
+            theme_mode = ThemeMode.DARK, // Use the enum directly
+            auto_lock_timeout = 300,
+            monthly_budget = monthlyBudget
         )
     }
 
@@ -88,6 +90,10 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
 
     fun updateCurrencyCode(currencyCode: String) {
         queries?.updateCurrencyCode(currencyCode)
+    }
+
+    fun updateAutoLockTimeout(timeoutSeconds: Long) {
+        queries?.updateAutoLockTimeout(timeoutSeconds)
     }
 
     fun getThemeMode(): Flow<ThemeMode> {
@@ -115,5 +121,34 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             ?.map { vaultConfig ->
                 vaultConfig?.currency_code ?: "USD" // Default to USD if not found
             } ?: kotlinx.coroutines.flow.flowOf("USD")
+    }
+
+    fun getCurrencyCodeSync(): String {
+        return try {
+            queries?.getVaultConfig()?.executeAsOneOrNull()?.currency_code ?: "USD"
+        } catch (e: Exception) {
+            "USD"
+        }
+    }
+
+    fun getAutoLockTimeout(): Flow<Long> {
+        return queries?.getVaultConfig()
+            ?.asFlow()
+            ?.mapToOneOrNull(Dispatchers.Default)
+            ?.map { vaultConfig ->
+                vaultConfig?.auto_lock_timeout ?: 300L // Default to 300 seconds if not found
+            } ?: kotlinx.coroutines.flow.flowOf(300L)
+    }
+
+    fun getMonthlyBudget(): Flow<Double> {
+        return queries?.getMonthlyBudget()
+            ?.asFlow()
+            ?.mapToOneOrNull(Dispatchers.Default)
+            ?.map { it?.monthly_budget ?: 0.0 } ?: kotlinx.coroutines.flow.flowOf(0.0)
+    }
+
+    fun lock() {
+        database = null
+        _isUnlocked.value = false
     }
 }

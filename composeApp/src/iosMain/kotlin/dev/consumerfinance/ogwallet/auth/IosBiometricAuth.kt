@@ -7,6 +7,11 @@ import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthentication
 import kotlin.coroutines.resume
 
 actual class BiometricAuth {
+    actual fun isBiometricAvailable(): Boolean {
+        val context = LAContext()
+        return context.canEvaluatePolicy(LAPolicyDeviceOwnerAuthentication, null)
+    }
+
     @OptIn(ExperimentalForeignApi::class)
     actual suspend fun authenticate(): Result<String> = suspendCancellableCoroutine { continuation ->
         val context = LAContext()

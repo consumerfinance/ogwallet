@@ -27,7 +27,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
-import dev.consumerfinance.ogwallet.util.formatCurrency
+import dev.consumerfinance.ogwallet.utils.formatCurrency
 
 
 @OptIn(ExperimentalTime::class)
@@ -158,7 +158,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                     icon = Icons.Filled.CreditCard,
                     iconColor = Color(0xFF3b82f6),
                     label = "Total Spent",
-                    value = "${currencyCode}${formatCurrency(totalSpent)}",
+                    value = formatCurrency(totalSpent, currencyCode),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
@@ -201,7 +201,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(cards) { card ->
-                        CreditCardItem(card, onClick = { onNavigate(1) })
+                        CreditCardItem(card, currencyCode, onClick = { onNavigate(1) })
                     }
                 }
             }
@@ -357,7 +357,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "${currencyCode}${formatCurrency(totalSpent)} of ${currencyCode}${formatCurrency(monthlyBudget, 0)}",
+                            "${formatCurrency(totalSpent, currencyCode)} of ${formatCurrency(monthlyBudget, currencyCode)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -378,8 +378,8 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
 
                     val remaining = monthlyBudget - totalSpent
                     Text(
-                        if (remaining > 0) "${currencyCode}${formatCurrency(remaining)} remaining in budget"
-                        else "${currencyCode}${formatCurrency(-remaining)} over budget",
+                        if (remaining > 0) "${formatCurrency(remaining, currencyCode)} remaining in budget"
+                        else "${formatCurrency(-remaining, currencyCode)} over budget",
                         style = MaterialTheme.typography.bodySmall,
                         color = if (remaining > 0) MaterialTheme.colorScheme.onSurfaceVariant
                                else Color(0xFFef4444)
@@ -435,7 +435,7 @@ fun StatCard(
 }
 
 @Composable
-fun CreditCardItem(card: CreditCard, onClick: () -> Unit) {
+fun CreditCardItem(card: CreditCard, currencyCode: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(280.dp)
@@ -502,7 +502,7 @@ fun CreditCardItem(card: CreditCard, onClick: () -> Unit) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "of $${card.limit.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")}",
+                            "of ${formatCurrency(card.limit.toDouble(), currencyCode)}",
                             color = Color.White.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -571,7 +571,7 @@ fun TransactionItem(transaction: TransactionEntry, currencyCode: String) {
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                "${currencyCode}${formatCurrency(transaction.amount)}",
+                formatCurrency(transaction.amount, currencyCode),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
