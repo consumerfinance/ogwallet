@@ -39,24 +39,28 @@ class TransactionRepository(private val dbManager: DatabaseManager) {
 
     @OptIn(kotlin.time.ExperimentalTime::class)
     fun getTransactionsByTimeRange(timeRange: String): Flow<List<TransactionEntry>> {
-        val queries = dbManager.queries ?: throw IllegalStateException("Vault Locked")
+        val queries = dbManager.queries ?: return kotlinx.coroutines.flow.flowOf(emptyList())
         val (start, end) = getStartAndEndOfRange(timeRange, currentInstant())
 
-        return queries.selectTransactionsByTimeRange(start.toEpochMilliseconds(), end.toEpochMilliseconds())
-            .asFlow()
-            .mapToList(Dispatchers.Default)
-            .map { list ->
-                list.map { row ->
-                    TransactionEntry(
-                        id = row.id,
-                        amount = row.amount,
-                        merchant = row.alias_name ?: row.merchant_raw,
-                        category = row.category,
-                        timestamp = Instant.fromEpochMilliseconds(row.timestamp),
-                        cardHandle = row.card_handle
-                    )
+        return try {
+            queries.selectTransactionsByTimeRange(start.toEpochMilliseconds(), end.toEpochMilliseconds())
+                .asFlow()
+                .mapToList(Dispatchers.Default)
+                .map { list ->
+                    list.map { row ->
+                        TransactionEntry(
+                            id = row.id,
+                            amount = row.amount,
+                            merchant = row.alias_name ?: row.merchant_raw,
+                            category = row.category,
+                            timestamp = Instant.fromEpochMilliseconds(row.timestamp),
+                            cardHandle = row.card_handle
+                        )
+                    }
                 }
-            }
+        } catch (e: Exception) {
+            kotlinx.coroutines.flow.flowOf(emptyList())
+        }
     }
 
     /**

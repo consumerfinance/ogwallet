@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,57 +16,87 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.models.CreditCard
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.CreditCardRepository
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import dev.consumerfinance.ogwallet.utils.formatCurrency
 import dev.consumerfinance.ogwallet.db.DatabaseManager
+import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import kotlinx.coroutines.launch
 
 
 @Preview
 @Composable
 fun CreditCardsScreen() {
-    val repository: TransactionRepository = koinInject()
+    val transactionRepository: TransactionRepository = koinInject()
+    val creditCardRepository: CreditCardRepository = koinInject()
     val dbManager: DatabaseManager = koinInject()
-    val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
-    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
+    val transactions by transactionRepository.getAllTransactions().collectAsState(initial = emptyList())
+    val manualCards by creditCardRepository.getAllCards().collectAsState(initial = emptyList())
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR")
 
     var showCardNumbers by remember { mutableStateOf(mutableMapOf<String, Boolean>()) }
+    var showAddCardDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Group transactions by card handle and calculate balances
     val cardBalances = transactions.groupBy { it.cardHandle }
         .mapValues { (_, txns) -> txns.sumOf { it.amount } }
 
-    // Create cards based on unique card handles from transactions
-    val cards = cardBalances.entries.mapIndexed { index, (cardHandle, balance) ->
-        val gradients = listOf(
-            listOf(Color(0xFF334155), Color(0xFF0f172a)),
-            listOf(Color(0xFFf59e0b), Color(0xFFb45309)),
-            listOf(Color(0xFF2563eb), Color(0xFF1e40af)),
-            listOf(Color(0xFF8b5cf6), Color(0xFF6366f1)),
-            listOf(Color(0xFF10b981), Color(0xFF059669))
-        )
-        CreditCard(
-            id = cardHandle,
-            name = "Card ending ${cardHandle}",
-            cardNumber = "•••• •••• •••• $cardHandle",
-            last4 = cardHandle,
-            cvv = "•••",
-            expiry = "••/••",
-            balance = balance,
-            limit = 10000,
-            availableCredit = 10000 - balance,
-            gradient = gradients[index % gradients.size],
-            network = "Card",
-            nextPayment = null,
-            minPayment = balance * 0.02
-        )
+    // Update manual card balances based on transactions
+    LaunchedEffect(transactions, manualCards) {
+        manualCards.forEach { card ->
+            val balance = cardBalances[card.last4] ?: 0.0
+            if (card.balance != balance) {
+                creditCardRepository.updateCardBalance(card.id, balance)
+            }
+        }
     }
 
-    val totalAvailableCredit = cards.sumOf { it.availableCredit }
-    val totalBalance = cards.sumOf { it.balance }
+    // Combine manual cards and transaction-derived cards
+    val allCards = remember(manualCards, cardBalances) {
+        val manualCardMap = manualCards.associateBy { it.last4 }
+        val transactionCards = cardBalances.entries.mapIndexed { index, (cardHandle, balance) ->
+            if (manualCardMap.containsKey(cardHandle)) {
+                // Update existing manual card with calculated balance
+                manualCardMap[cardHandle]!!.copy(balance = balance, availableCredit = manualCardMap[cardHandle]!!.limit - balance)
+            } else {
+                // Create transaction-derived card
+                val gradients = listOf(
+                    listOf(Color(0xFF334155), Color(0xFF0f172a)),
+                    listOf(Color(0xFFf59e0b), Color(0xFFb45309)),
+                    listOf(Color(0xFF2563eb), Color(0xFF1e40af)),
+                    listOf(Color(0xFF8b5cf6), Color(0xFF6366f1)),
+                    listOf(Color(0xFF10b981), Color(0xFF059669))
+                )
+                CreditCard(
+                    id = cardHandle,
+                    name = "Card ending ${cardHandle}",
+                    cardNumber = "•••• •••• •••• $cardHandle",
+                    last4 = cardHandle,
+                    cvv = "•••",
+                    expiry = "••/••",
+                    balance = balance,
+                    limit = 10000,
+                    availableCredit = 10000 - balance,
+                    gradient = gradients[index % gradients.size],
+                    network = "Card",
+                    nextPayment = null,
+                    minPayment = balance * 0.02
+                )
+            }
+        }
+        (manualCards + transactionCards).distinctBy { it.id }
+    }
+
+    val totalAvailableCredit = allCards.sumOf { it.availableCredit }
+    val totalBalance = allCards.sumOf { it.balance }
 
     LazyColumn(
         modifier = Modifier
@@ -153,7 +184,7 @@ fun CreditCardsScreen() {
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                     Text(
-                                        "${cards.size}",
+                                        "${allCards.size}",
                                         color = Color.White,
                                         style = MaterialTheme.typography.bodyMedium
                                     )
@@ -181,10 +212,22 @@ fun CreditCardsScreen() {
                     }
                 }
             }
+        
+            if (showAddCardDialog) {
+                AddCardDialog(
+                    onDismiss = { showAddCardDialog = false },
+                    onAddCard = { card ->
+                        scope.launch {
+                            creditCardRepository.addCard(card)
+                            showAddCardDialog = false
+                        }
+                    }
+                )
+            }
         }
 
         // Credit Cards List
-        if (cards.isEmpty()) {
+        if (allCards.isEmpty()) {
             item {
                 Card(
                     modifier = Modifier
@@ -224,7 +267,7 @@ fun CreditCardsScreen() {
                 }
             }
         } else {
-            items(cards) { card ->
+            items(allCards) { card ->
                 CreditCardDetailItem(
                     card = card,
                     currencyCode = currencyCode,
@@ -239,32 +282,32 @@ fun CreditCardsScreen() {
         }
 
         // Add Card Button
-//        item {
-//            OutlinedCard(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 16.dp),
-//                shape = RoundedCornerShape(16.dp),
-//                onClick = { }
-//            ) {
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(24.dp),
-//                    horizontalArrangement = Arrangement.Center,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Text(
-//                        "+ ",
-//                        style = MaterialTheme.typography.headlineSmall
-//                    )
-//                    Text(
-//                        "Add New Card",
-//                        style = MaterialTheme.typography.bodyLarge
-//                    )
-//                }
-//            }
-//        }
+        item {
+            OutlinedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                onClick = { showAddCardDialog = true }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "+ ",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        "Add New Card",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -426,4 +469,81 @@ fun DetailRow(label: String, value: String) {
             style = MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+@Composable
+fun AddCardDialog(
+    onDismiss: () -> Unit,
+    onAddCard: (CreditCard) -> Unit
+) {
+    var cardName by remember { mutableStateOf("") }
+    var last4 by remember { mutableStateOf("") }
+    var creditLimit by remember { mutableStateOf("10000") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Card") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = cardName,
+                    onValueChange = { cardName = it },
+                    label = { Text("Card Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = last4,
+                    onValueChange = { last4 = it },
+                    label = { Text("Last 4 Digits") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = creditLimit,
+                    onValueChange = { creditLimit = it },
+                    label = { Text("Credit Limit") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (cardName.isNotBlank() && last4.length == 4 && creditLimit.toDoubleOrNull() != null) {
+                        val limit = creditLimit.toDouble()
+                        val gradients = listOf(
+                            listOf(Color(0xFF334155), Color(0xFF0f172a)),
+                            listOf(Color(0xFFf59e0b), Color(0xFFb45309)),
+                            listOf(Color(0xFF2563eb), Color(0xFF1e40af)),
+                            listOf(Color(0xFF8b5cf6), Color(0xFF6366f1)),
+                            listOf(Color(0xFF10b981), Color(0xFF059669))
+                        )
+                        val card = CreditCard(
+                            id = last4,
+                            name = cardName,
+                            cardNumber = "•••• •••• •••• $last4",
+                            last4 = last4,
+                            cvv = "•••",
+                            expiry = "••/••",
+                            balance = 0.0,
+                            limit = limit.toInt(),
+                            availableCredit = limit,
+                            gradient = gradients.random(),
+                            network = "Card",
+                            nextPayment = null,
+                            minPayment = 0.0
+                        )
+                        onAddCard(card)
+                    }
+                }
+            ) {
+                Text("Add Card")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

@@ -39,7 +39,7 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
     val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
     val categoryBreakdown by repository.getSpendingBreakdown().collectAsState(initial = emptyList())
     val userName by dbManager.getUserName().collectAsState(initial = "User") // Collect userName
-    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD") // Collect currencyCode
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR") // Collect currencyCode
 
     val cards = remember(transactions) {
         transactions

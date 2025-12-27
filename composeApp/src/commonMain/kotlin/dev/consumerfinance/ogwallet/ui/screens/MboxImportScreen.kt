@@ -30,7 +30,7 @@ fun MboxImportScreen(onBack: () -> Unit) {
     val importService = remember { MboxImportService(repository) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR")
 
     var isImporting by remember { mutableStateOf(false) }
     var importResult by remember { mutableStateOf<MboxImportResult?>(null) }

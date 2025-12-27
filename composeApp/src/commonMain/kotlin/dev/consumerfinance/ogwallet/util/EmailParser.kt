@@ -11,7 +11,7 @@ object EmailParser {
     
     // Pattern for transaction emails with amount and merchant
     private val transactionRegex = Regex(
-        "(?i)(?:transaction|payment|purchase|spent|debited|charged|credited).*?(?:amount|value)?\\s*(?:rs\\.?|inr|usd|\\$|₹)?\\s*([\\d,.]+).*?(?:at|to|from|merchant|for|of)\\s+([A-Za-z0-9\\s&.'-]+)(?:\\.|\\n|$)",
+        "(?i)(?:transaction|payment|purchase|spent|debited|charged|credited).*?(?:amount|value)?\\s*(?:rs\\.?|inr|usd|\\$|₹)?\\s*([\\d,.]+).*?(?:at|to|from|merchant|for|of|on)\\s+([A-Za-z0-9\\s&.'-]+)(?:\\.|\\n|$)",
         RegexOption.DOT_MATCHES_ALL
     )
     

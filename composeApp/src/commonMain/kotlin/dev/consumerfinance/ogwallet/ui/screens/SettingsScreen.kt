@@ -56,6 +56,11 @@ fun SettingsScreen() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current // Get context for file operations
 
+    val dbManager = koinInject<DatabaseManager>() // Inject DatabaseManager
+    val currentCurrency by dbManager.getCurrencyCode().collectAsState(initial = "INR")
+    val currentTheme by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
+    val currentAutoLockTimeout by dbManager.getAutoLockTimeout().collectAsState(initial = 300L)
+
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json") // MIME type for JSON
     ) { uri ->
@@ -81,8 +86,6 @@ fun SettingsScreen() {
             }
         }
     }
-
-    val dbManager = koinInject<DatabaseManager>() // Inject DatabaseManager
 
     // Check if we're on Android
     val platform = getPlatform()
@@ -110,8 +113,7 @@ fun SettingsScreen() {
                 onOpenThemeSelector = { showThemeDialog = true },
                 onChangeMasterPinClicked = { showChangePinDialog = true },
                 onOpenCurrencySelector = { showCurrencyDialog = true },
-                onOpenAutoLockTimeoutSelector = { showAutoLockTimeoutDialog = true },
-                dbManager = dbManager
+                onOpenAutoLockTimeoutSelector = { showAutoLockTimeoutDialog = true }
             )
 
             if (showExportDataDialog) {
@@ -136,6 +138,7 @@ fun SettingsScreen() {
 
             if (showThemeDialog) {
                 ThemeSelectionDialog(
+                    currentTheme = currentTheme,
                     onDismiss = { showThemeDialog = false },
                     onThemeSelected = { themeMode ->
                         scope.launch {
@@ -175,6 +178,7 @@ fun SettingsScreen() {
 
             if (showCurrencyDialog) {
                 CurrencySelectionDialog(
+                    currentCurrency = currentCurrency,
                     onDismiss = { showCurrencyDialog = false },
                     onCurrencySelected = { currencyCode ->
                         scope.launch {
@@ -188,6 +192,7 @@ fun SettingsScreen() {
 
             if (showAutoLockTimeoutDialog) {
                 AutoLockTimeoutDialog(
+                    currentTimeout = currentAutoLockTimeout.toInt(),
                     onDismiss = { showAutoLockTimeoutDialog = false },
                     onTimeoutSelected = { timeoutSeconds ->
                         scope.launch {
@@ -214,8 +219,7 @@ private fun SettingsScreenContent(
     onOpenThemeSelector: () -> Unit,
     onChangeMasterPinClicked: () -> Unit, // New parameter
     onOpenCurrencySelector: () -> Unit, // Add this parameter
-    onOpenAutoLockTimeoutSelector: () -> Unit, // New parameter
-    dbManager: DatabaseManager // New parameter
+    onOpenAutoLockTimeoutSelector: () -> Unit // New parameter
 ) {
     LazyColumn(
         modifier = Modifier
@@ -438,11 +442,12 @@ fun ExportDataDialog(
 
 @Composable
 fun ThemeSelectionDialog(
+    currentTheme: ThemeMode,
     onDismiss: () -> Unit,
     onThemeSelected: (ThemeMode) -> Unit
 ) {
     val themeOptions = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.SYSTEM)
-    var selectedOption by remember { mutableStateOf(ThemeMode.SYSTEM) } // TODO: Get actual current theme
+    var selectedOption by remember { mutableStateOf(currentTheme) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -597,11 +602,12 @@ fun ChangePinDialog(
 
 @Composable
 fun CurrencySelectionDialog(
+    currentCurrency: String,
     onDismiss: () -> Unit,
     onCurrencySelected: (String) -> Unit
 ) {
     val currencyOptions = listOf("INR" to "Indian Rupee", "USD" to "US Dollar")
-    var selectedOption by remember { mutableStateOf("INR") } // TODO: Get actual current currency
+    var selectedOption by remember { mutableStateOf(currentCurrency) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -647,6 +653,7 @@ fun CurrencySelectionDialog(
 
 @Composable
 fun AutoLockTimeoutDialog(
+    currentTimeout: Int,
     onDismiss: () -> Unit,
     onTimeoutSelected: (Int) -> Unit
 ) {
@@ -658,7 +665,7 @@ fun AutoLockTimeoutDialog(
         1800 to "30 minutes",
         0 to "Never"
     )
-    var selectedOption by remember { mutableStateOf(300) } // Default to 5 minutes
+    var selectedOption by remember { mutableStateOf(currentTimeout) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -52,7 +52,7 @@ fun BudgetScreen() {
     val transactionRepository = koinInject<TransactionRepository>()
     val dbManager: DatabaseManager = koinInject()
     val allTransactions by transactionRepository.getAllTransactions().collectAsState(emptyList())
-    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR")
 
     val walletBalance = remember(allTransactions) {
         allTransactions.sumOf { it.amount }

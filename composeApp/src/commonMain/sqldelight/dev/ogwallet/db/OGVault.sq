@@ -73,7 +73,23 @@ CREATE TABLE IF NOT EXISTS vault_config (
     monthly_budget REAL DEFAULT 0.0
 );
 
--- 8. Credit Card Bills
+-- 8. Credit Cards
+CREATE TABLE IF NOT EXISTS credit_card (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    card_number TEXT,
+    last4 TEXT NOT NULL,
+    cvv TEXT,
+    expiry TEXT,
+    balance REAL DEFAULT 0,
+    credit_limit REAL DEFAULT 10000,
+    available_credit REAL DEFAULT 10000,
+    network TEXT DEFAULT 'Card',
+    next_payment TEXT,
+    min_payment REAL DEFAULT 0
+);
+
+-- 9. Credit Card Bills
 CREATE TABLE IF NOT EXISTS credit_card_bill (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     card_handle TEXT NOT NULL,
@@ -171,6 +187,25 @@ WHERE id = 0;
 
 getMonthlyBudget:
 SELECT monthly_budget FROM vault_config WHERE id = 0;
+
+-- Credit Card Queries
+insertCard:
+INSERT INTO credit_card(id, name, card_number, last4, cvv, expiry, balance, credit_limit, available_credit, network, next_payment, min_payment)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllCards:
+SELECT * FROM credit_card ORDER BY name ASC;
+
+getCardById:
+SELECT * FROM credit_card WHERE id = ?;
+
+updateCardBalance:
+UPDATE credit_card
+SET balance = ?, available_credit = credit_limit - ?
+WHERE id = ?;
+
+deleteCard:
+DELETE FROM credit_card WHERE id = ?;
 
 -- Credit Card Bill Queries
 insertBill:

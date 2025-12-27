@@ -66,7 +66,11 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
      * Check if onboarding is complete by checking if vault_config exists
      */
     fun isOnboardingComplete(): Boolean {
-        return true // Assume onboarding is complete after unlock
+        return try {
+            queries?.getVaultConfig()?.executeAsOneOrNull() != null
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /**
@@ -119,15 +123,15 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             ?.asFlow()
             ?.mapToOneOrNull(Dispatchers.Default)
             ?.map { vaultConfig ->
-                vaultConfig?.currency_code ?: "USD" // Default to USD if not found
-            } ?: kotlinx.coroutines.flow.flowOf("USD")
+                vaultConfig?.currency_code ?: "INR" // Default to INR if not found
+            } ?: kotlinx.coroutines.flow.flowOf("INR")
     }
 
     fun getCurrencyCodeSync(): String {
         return try {
-            queries?.getVaultConfig()?.executeAsOneOrNull()?.currency_code ?: "USD"
+            queries?.getVaultConfig()?.executeAsOneOrNull()?.currency_code ?: "INR"
         } catch (e: Exception) {
-            "USD"
+            "INR"
         }
     }
 

@@ -44,7 +44,7 @@ fun BudgetAnalyticsScreen() {
     var timeRange by remember { mutableStateOf("month") } // Moved to before usage
     val transactions by repository.getTransactionsByTimeRange(timeRange).collectAsState(initial = emptyList())
     val categoryBreakdown by repository.getSpendingBreakdownByTimeRange(timeRange).collectAsState(initial = emptyList())
-    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "USD")
+    val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR")
 
     // Define budgets for each category
     val categoryBudgets = mapOf(
