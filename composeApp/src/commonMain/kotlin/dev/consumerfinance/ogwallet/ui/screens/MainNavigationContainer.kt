@@ -32,7 +32,7 @@ fun MainNavigationContainer() {
         NavigationItem("Home", Icons.Filled.Home, "home"),
         NavigationItem("Cards", Icons.Filled.CreditCard, "cards"),
         NavigationItem("Budget", Icons.Filled.AccountBalanceWallet, "wallet"),
-
+        NavigationItem("Travel", Icons.Filled.TravelExplore,"travel"),
         NavigationItem("Stats", Icons.Filled.TrendingUp, "stats"),
         NavigationItem("Settings", Icons.Filled.Settings, "settings")
     )
@@ -78,8 +78,10 @@ fun DesktopNavigationLayout(
             when (selectedTab) {
                 0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
                 1 -> CreditCardsScreen()
-                                        2 -> BudgetScreen()                3 -> BudgetAnalyticsScreen()
-                4 -> SettingsScreen()
+                2 -> BudgetScreen()
+                3 -> TravelPlansScreen()
+                4 -> BudgetAnalyticsScreen()
+                5 -> SettingsScreen()
             }
         }
 
@@ -259,8 +261,9 @@ fun MobileNavigationLayout(
                         0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
                         1 -> CreditCardsScreen()
                         2 -> BudgetScreen()
-                        3 -> BudgetAnalyticsScreen()
-                        4 -> SettingsScreen()
+                        3 -> TravelPlansScreen()
+                        4 -> BudgetAnalyticsScreen()
+                        5 -> SettingsScreen()
                     }
                 }
             }}

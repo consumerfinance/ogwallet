@@ -45,6 +45,7 @@ fun BudgetAnalyticsScreen() {
     val transactions by repository.getTransactionsByTimeRange(timeRange).collectAsState(initial = emptyList())
     val categoryBreakdown by repository.getSpendingBreakdownByTimeRange(timeRange).collectAsState(initial = emptyList())
     val currencyCode by dbManager.getCurrencyCode().collectAsState(initial = "INR")
+    val monthlyBudget by dbManager.getMonthlyBudget().collectAsState(initial = 0.0)
 
     // Define budgets for each category
     val categoryBudgets = mapOf(
@@ -68,7 +69,7 @@ fun BudgetAnalyticsScreen() {
     }
 
     val totalSpent = spendingByCategory.sumOf { it.amount }
-    val totalBudget = spendingByCategory.sumOf { it.budget }
+    val totalBudget = monthlyBudget.toInt() // Use monthly budget from database
     val budgetRemaining = totalBudget - totalSpent
 
     // Generate alerts for categories over budget
