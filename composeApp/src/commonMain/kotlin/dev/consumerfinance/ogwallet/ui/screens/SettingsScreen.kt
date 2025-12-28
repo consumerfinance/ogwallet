@@ -59,7 +59,7 @@ fun SettingsScreen() {
     val dbManager = koinInject<DatabaseManager>() // Inject DatabaseManager
     val currentCurrency by dbManager.getCurrencyCode().collectAsState(initial = "INR")
     val currentTheme by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
-    val currentAutoLockTimeout by dbManager.getAutoLockTimeout().collectAsState(initial = 300L)
+    val currentAutoLockTimeout by dbManager.getAutoLockTimeout().collectAsState(initial = 60L)
 
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json") // MIME type for JSON

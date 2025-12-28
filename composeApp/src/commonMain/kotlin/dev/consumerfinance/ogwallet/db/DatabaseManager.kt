@@ -69,6 +69,7 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
 
     /**
      * Check if onboarding is complete by checking if vault_config exists
+     * Note: This requires the database to be unlocked first
      */
     fun isOnboardingComplete(): Boolean {
         return try {
@@ -76,6 +77,17 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
         } catch (e: Exception) {
             false
         }
+    }
+
+    /**
+     * Check if onboarding is complete without requiring database unlock
+     * This is used during app startup to determine initial flow
+     */
+    fun isOnboardingCompleteWithoutUnlock(): Boolean {
+        // For now, we'll use a simple heuristic: if PIN is set and database can be unlocked with it,
+        // then assume onboarding is complete. This is a temporary solution.
+        // TODO: Implement a more robust way to check onboarding status without unlocking
+        return false // Always return false for now to force onboarding
     }
 
     /**
@@ -88,7 +100,7 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             currency_code = currencyCode,
             is_biometric_enabled = true,
             theme_mode = ThemeMode.DARK, // Use the enum directly
-            auto_lock_timeout = 5,
+            auto_lock_timeout = 60,
             monthly_budget = monthlyBudget
         )
     }
@@ -145,8 +157,8 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             ?.asFlow()
             ?.mapToOneOrNull(Dispatchers.Default)
             ?.map { vaultConfig ->
-                vaultConfig?.auto_lock_timeout ?: 5L // Default to 5 seconds if not found
-            } ?: kotlinx.coroutines.flow.flowOf(30L)
+                vaultConfig?.auto_lock_timeout ?: 60L // Default to 60 seconds if not found
+            } ?: kotlinx.coroutines.flow.flowOf(60L)
     }
 
     fun getMonthlyBudget(): Flow<Double> {

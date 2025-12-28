@@ -30,7 +30,7 @@ class OGWalletApplication : Application() {
         if (GlobalContext.getOrNull() == null) {
             val platformModule = module {
                 single { DriverFactory(androidContext()) }
-                single { SmsReader() }
+                single { SmsReader(androidContext()) }
                 single<EncryptionUtil> { EncryptionUtil(AppContext(androidContext())) }
             }
 

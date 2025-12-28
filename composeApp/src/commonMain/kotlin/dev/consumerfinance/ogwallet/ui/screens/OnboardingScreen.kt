@@ -42,7 +42,7 @@ data class InitialSetup(
 
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
-    val pagerState = rememberPagerState(pageCount = { 5 })
+    val pagerState = rememberPagerState(pageCount = { 6 })
     val scope = rememberCoroutineScope()
     var setup by remember { mutableStateOf(InitialSetup()) }
     var showPINSetup by remember { mutableStateOf(false) }
@@ -53,6 +53,9 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
     val dbManager = koinInject<DatabaseManager>()
     val biometricAuth = koinInject<BiometricAuth>()
+    val smsReader = koinInject<SmsReader>()
+    val smsParser = koinInject<SmsParser>()
+    val transactionRepository = koinInject<TransactionRepository>()
 
     // Show PIN setup dialog if needed
     if (showPINSetup) {
@@ -67,7 +70,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         onSuccess = { key ->
                             println("Onboarding: PIN setup success, unlocking vault")
                             dbManager.unlock(key)
-                            dbManager.completeOnboarding(setup.userName)
+                            dbManager.completeOnboarding(setup.userName, setup.monthlyBudget)
                             showPINSetup = false
                             onFinished()
                         },
@@ -102,7 +105,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     val result = biometricAuth.verifyMasterPIN(pin)
                     if (result.isSuccess) {
                         dbManager.unlock(result.getOrThrow()) // Unlock with the verified key
-                        dbManager.completeOnboarding(setup.userName) // Pass username after unlock
+                        dbManager.completeOnboarding(setup.userName, setup.monthlyBudget) // Pass username after unlock
                         showPINVerification = false
                         onFinished()
                     } else {
@@ -119,7 +122,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             BottomAppBar(
                 actions = {
                     Text(
-                        text = "Step ${pagerState.currentPage + 1} of 5",
+                        text = "Step ${pagerState.currentPage + 1} of 6",
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -129,7 +132,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         onClick = {
                             if (isProcessing) return@FloatingActionButton
 
-                            if (pagerState.currentPage == 3) {
+                            if (pagerState.currentPage == 4) {
                                 // PIN setup step
                                 when {
                                     setup.pin.length != 6 -> {
@@ -145,10 +148,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                                             println("Onboarding: Setup result = ${result.isSuccess}")
                                             result.fold(
                                                 onSuccess = { key ->
-                                                    println("Onboarding: PIN setup success")
+                                                    println("Onboarding: PIN setup success, unlocking vault")
+                                                    dbManager.unlock(key)
                                                     errorMessage = null
                                                     scope.launch {
-                                                        pagerState.animateScrollToPage(4)
+                                                        pagerState.animateScrollToPage(5)
                                                     }
                                                     isProcessing = false
                                                 },
@@ -161,55 +165,39 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                                         }
                                     }
                                 }
-                            } else if (pagerState.currentPage < 4) {
+                            } else if (pagerState.currentPage < 5) {
                                 scope.launch {
                                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                 }
                             } else {
-                                // FINAL STEP: Initialize the secure vault
+                                // FINAL STEP: Scan SMS and complete onboarding
                                 isProcessing = true
-                                println("Onboarding: Final step - checking biometric availability")
-                                if (biometricAuth.isBiometricAvailable()) {
-                                    println("Onboarding: Biometric available, attempting authentication")
-                                    scope.launch {
-                                        val authResult = biometricAuth.authenticate()
-                                        println("Onboarding: Auth result = ${authResult.isSuccess}")
-                                        authResult.fold(
-                                            onSuccess = { key ->
-                                                // Save user name after successful authentication
-                                                println("Onboarding: Auth success, unlocking vault")
-                                                dbManager.unlock(key)
-                                                dbManager.completeOnboarding(setup.userName)
+                                scope.launch {
+                                    try {
+                                        println("Onboarding: Starting SMS scan")
+                                        smsReader.scanSmsMessagesForTransactions(90).collect { progress ->
+                                            println("Onboarding: Scan progress - ${progress.scannedMessages}/${progress.totalMessages}, found ${progress.transactionsFound}, saved ${progress.transactionsSaved}")
+                                            if (progress.isComplete) {
+                                                println("Onboarding: Scan complete, completing onboarding")
+                                                dbManager.completeOnboarding(setup.userName, setup.monthlyBudget)
                                                 onFinished()
-                                            },
-                                            onFailure = { exception ->
-                                                println("Onboarding: Auth failed - ${exception.message}")
-                                                // Check if we need PIN setup or verification
-                                                if (biometricAuth.isPINSet()) {
-                                                    println("Onboarding: PIN is set, showing PIN verification dialog")
-                                                    showPINVerification = true
-                                                } else {
-                                                    println("Onboarding: PIN not set, showing PIN setup dialog")
-                                                    showPINSetup = true
-                                                }
+                                                println("Onboarding: Finished successfully")
                                             }
-                                        )
-                                    }
-                                } else {
-                                    println("Onboarding: Biometric not available, checking PIN")
-                                    // Biometric not available, use PIN
-                                    if (biometricAuth.isPINSet()) {
-                                        println("Onboarding: PIN is set, showing PIN verification dialog")
-                                        showPINVerification = true
-                                    } else {
-                                        println("Onboarding: PIN not set, showing PIN setup dialog")
-                                        showPINSetup = true
+                                        }
+                                    } catch (e: Exception) {
+                                        println("Onboarding: Error during SMS scan: ${e.message}")
+                                        e.printStackTrace()
+                                        // Still complete onboarding even if scan fails
+                                        dbManager.completeOnboarding(setup.userName, setup.monthlyBudget)
+                                        onFinished()
+                                    } finally {
+                                        isProcessing = false
                                     }
                                 }
                             }
                         }
                     ) {
-                        val icon = if (pagerState.currentPage == 4) Icons.Default.Check else Icons.Default.ArrowForward
+                        val icon = if (pagerState.currentPage == 5) Icons.Default.Check else Icons.Default.ArrowForward
                         Icon(icon, contentDescription = "Next")
                     }
                 }
@@ -227,8 +215,12 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     userName = setup.userName,
                     onUserNameChange = { setup = setup.copy(userName = it) }
                 )
-                2 -> SecurityStep()
-                3 -> PINSetupStep(
+                2 -> BudgetStep(
+                    monthlyBudget = setup.monthlyBudget,
+                    onMonthlyBudgetChange = { setup = setup.copy(monthlyBudget = it) }
+                )
+                3 -> SecurityStep()
+                4 -> PINSetupStep(
                     pin = setup.pin,
                     onPinChange = { setup = setup.copy(pin = it) },
                     confirmPin = setup.confirmPin,
@@ -237,7 +229,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     onShowPinChange = { showPin = it },
                     errorMessage = errorMessage
                 )
-                4 -> SmsScanningStep()
+                5 -> SmsScanningStep()
             }
         }
     }
@@ -277,6 +269,34 @@ fun UserNameStep(
             value = userName,
             onValueChange = onUserNameChange,
             label = { Text("Your Name") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun BudgetStep(
+    monthlyBudget: Double,
+    onMonthlyBudgetChange: (Double) -> Unit
+) {
+    var budgetText by remember { mutableStateOf(if (monthlyBudget == 0.0) "" else monthlyBudget.toString()) }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("What's your monthly budget?", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = budgetText,
+            onValueChange = {
+                budgetText = it
+                onMonthlyBudgetChange(it.toDoubleOrNull() ?: 0.0)
+            },
+            label = { Text("Monthly Budget") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )

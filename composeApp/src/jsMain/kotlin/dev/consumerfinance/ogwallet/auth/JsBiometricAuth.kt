@@ -70,6 +70,15 @@ actual class BiometricAuth {
     actual fun isPINSet(): Boolean {
         return getPINHash() != null
     }
+
+    // --- Onboarding completion methods ---
+    actual fun setOnboardingComplete(complete: Boolean) {
+        window.localStorage.setItem("ogwallet_onboarding_complete", complete.toString())
+    }
+
+    actual fun isOnboardingComplete(): Boolean {
+        return window.localStorage.getItem("ogwallet_onboarding_complete") == "true"
+    }
     
     // Storage helper methods using localStorage
     

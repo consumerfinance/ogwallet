@@ -21,6 +21,7 @@ actual class BiometricAuth {
     private val configDir = File(System.getProperty("user.home"), ".ogwallet")
     private val pinFile = File(configDir, ".pin")
     private val passphraseFile = File(configDir, ".passphrase")
+    private val onboardingFile = File(configDir, ".onboarding_complete")
 
     actual suspend fun authenticate(): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -163,6 +164,27 @@ actual class BiometricAuth {
         val encrypted = Base64.getDecoder().decode(encryptedPassphrase)
         val decrypted = cipher.doFinal(encrypted)
         return String(decrypted)
+    }
+
+    // --- Onboarding completion methods ---
+    actual fun setOnboardingComplete(complete: Boolean) {
+        try {
+            if (!configDir.exists()) {
+                configDir.mkdirs()
+            }
+            onboardingFile.writeText(complete.toString())
+        } catch (e: Exception) {
+            // Log error but don't throw
+            println("Failed to set onboarding status: ${e.message}")
+        }
+    }
+
+    actual fun isOnboardingComplete(): Boolean {
+        return try {
+            onboardingFile.exists() && onboardingFile.readText() == "true"
+        } catch (e: Exception) {
+            false
+        }
     }
 }
 

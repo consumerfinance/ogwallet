@@ -280,34 +280,6 @@ fun CreditCardsScreen() {
                 )
             }
         }
-
-        // Add Card Button
-        item {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                onClick = { showAddCardDialog = true }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "+ ",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Text(
-                        "Add New Card",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
     }
 }
 

@@ -90,7 +90,8 @@ fun LockScreen(dbManager: DatabaseManager) {
                 biometricAuth = biometricAuth,
                 dbManager = dbManager,
                 errorMessage = errorMessage,
-                onErrorChange = { errorMessage = it }
+                onErrorChange = { errorMessage = it },
+                onSwitchToPINEntry = { authState = AuthState.PIN_ENTRY_REQUIRED }
             )
         }
     }
@@ -101,7 +102,8 @@ fun DefaultLockScreen(
     biometricAuth: BiometricAuth,
     dbManager: DatabaseManager,
     errorMessage: String?,
-    onErrorChange: (String?) -> Unit
+    onErrorChange: (String?) -> Unit,
+    onSwitchToPINEntry: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -143,6 +145,10 @@ fun DefaultLockScreen(
             onClick = {
                 authenticate(biometricAuth, dbManager, scope) { error ->
                     onErrorChange(error)
+                    // If biometric fails and PIN is set, switch to PIN entry
+                    if (biometricAuth.isPINSet()) {
+                        onSwitchToPINEntry()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -151,6 +157,17 @@ fun DefaultLockScreen(
             Icon(Icons.Default.Fingerprint, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text("Unlock with Biometrics", fontSize = 18.sp)
+        }
+
+        // PIN Entry Button (if PIN is set)
+        if (biometricAuth.isPINSet()) {
+            Spacer(Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { onSwitchToPINEntry() },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text("Use PIN Instead", fontSize = 16.sp)
+            }
         }
 
         // Error Feedback

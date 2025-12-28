@@ -26,18 +26,9 @@ actual class BiometricAuth(private val activity: FragmentActivity) {
     }
 
     actual suspend fun authenticate(): Result<String> {
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock OGWallet")
-            .setSubtitle("Use your screen lock to access the vault")
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
-            .build()
-
-        // Implementation involves showing BiometricPrompt and returning
-        // a key retrieved from the Android Keystore
-        return Result.success(retrieveKeyFromKeystore())
+        // For now, always fail biometric auth to force PIN fallback
+        // TODO: Implement proper biometric authentication
+        return Result.failure(Exception("Biometric authentication not implemented"))
     }
 
     private fun retrieveKeyFromKeystore(): String {
@@ -52,6 +43,7 @@ actual class BiometricAuth(private val activity: FragmentActivity) {
     private val KEY_ENCRYPTED_PASSPHRASE = "encrypted_passphrase"
     private val KEY_IV = "iv"
     private val KEY_SALT = "salt"
+    private val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 
     private fun getSharedPreferences(): SharedPreferences {
         return OGWalletApplication.appContext.getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE)
@@ -148,5 +140,18 @@ actual class BiometricAuth(private val activity: FragmentActivity) {
     actual fun isPINSet(): Boolean {
         val prefs = getSharedPreferences()
         return prefs.contains(KEY_PIN_HASH) && prefs.contains(KEY_ENCRYPTED_PASSPHRASE)
+    }
+
+    // --- Onboarding completion methods ---
+    actual fun setOnboardingComplete(complete: Boolean) {
+        val prefs = getSharedPreferences()
+        val editor = prefs.edit()
+        editor.putBoolean(KEY_ONBOARDING_COMPLETE, complete)
+        editor.apply()
+    }
+
+    actual fun isOnboardingComplete(): Boolean {
+        val prefs = getSharedPreferences()
+        return prefs.getBoolean(KEY_ONBOARDING_COMPLETE, false)
     }
 }

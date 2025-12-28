@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'composeApp'
-    spec.version                  = '1.0.0'
+    spec.version                  = '0.5.0'
     spec.homepage                 = 'https://github.com/consumerfinance/ogwallet'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''

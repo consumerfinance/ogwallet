@@ -16,11 +16,14 @@ import dev.consumerfinance.ogwallet.models.ThemeMode
 import androidx.compose.foundation.isSystemInDarkTheme
 import dev.consumerfinance.ogwallet.ui.theme.DarkColorScheme
 import dev.consumerfinance.ogwallet.ui.theme.LightColorScheme
+import dev.consumerfinance.ogwallet.auth.BiometricAuth
 
 @Composable
 fun App() {
     val dbManager = koinInject<DatabaseManager>()
+    val biometricAuth = koinInject<BiometricAuth>()
     val isUnlocked by dbManager.isUnlocked.collectAsState()
+    var justFinishedOnboarding by remember { mutableStateOf(false) }
 
     val currentThemeMode by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
     val useDarkTheme = when (currentThemeMode) {
@@ -32,12 +35,22 @@ fun App() {
     MaterialTheme(colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme) {
         Surface {
             when {
+                // Just finished onboarding: go directly to main app
+                justFinishedOnboarding -> {
+                    MainNavigationContainer()
+                }
+                // First-time user: onboarding not complete, show onboarding directly
+                !biometricAuth.isOnboardingComplete() -> {
+                    OnboardingScreen(onFinished = {
+                        justFinishedOnboarding = true
+                        biometricAuth.setOnboardingComplete(true)
+                    })
+                }
+                // Onboarding complete but vault not unlocked: show lock screen
                 !isUnlocked -> {
                     LockScreen(dbManager)
                 }
-                isUnlocked && !dbManager.isOnboardingComplete() -> {
-                    OnboardingScreen(onFinished = {})
-                }
+                // Normal operation: unlocked and onboarding complete
                 else -> {
                     MainNavigationContainer()
                 }

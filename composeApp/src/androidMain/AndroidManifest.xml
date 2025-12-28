@@ -36,6 +36,10 @@
             android:exported="true"
             android:name=".BillReminderTestActivity"
             android:label="Bill Reminder Test" />
+        <activity
+            android:exported="true"
+            android:name=".SmsTestDeriverActivity"
+            android:label="SMS Test Deriver" />
         <receiver
             android:name=".SmsInterceptor"
             android:exported="true">

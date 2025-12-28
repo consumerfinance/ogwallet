@@ -91,7 +91,7 @@ kotlin {
 
     cocoapods {
         // REQUIRED: The version of your shared module as an iOS Pod
-        version = "1.0.0"
+        version = "0.5.0"
 
         // REQUIRED: Metadata for the generated .podspec
         summary = "Encrypted transaction vault logic for OGWallet"
@@ -127,7 +127,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.5.0"
     }
     packaging {
         resources {

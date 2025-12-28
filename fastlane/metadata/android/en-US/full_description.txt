@@ -1,0 +1,13 @@
+OGWallet can automatically scan your SMS messages and import credit card transactions!
+
+### Features
+
+*   📨**Automatic SMS Scanning**- Scan all existing SMS messages
+
+*   🔄**Real-time Interception**- Capture new transaction SMS automatically
+
+*   🏦**25+ Banks Supported**- HDFC, ICICI, SBI, Axis, and more
+
+*   🔒**Privacy First**- All processing happens locally on your device
+
+*   📊**Progress Tracking**- Real-time scan progress with statistics

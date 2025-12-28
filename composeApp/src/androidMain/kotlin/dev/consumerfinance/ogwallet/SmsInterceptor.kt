@@ -26,19 +26,19 @@ class SmsInterceptor : BroadcastReceiver(), KoinComponent {
                 val body = sms.displayMessageBody
                 Log.d("SmsInterceptor", "Received SMS: $body")
 
-                CoroutineScope(Dispatchers.IO).launch { // Launch coroutine for suspend calls
-                    val match = smsParser.parse(body)
+                val match = smsParser.parse(body)
 
-                    if (match != null) {
-                        Log.d("SmsInterceptor", "Parsed transaction: ${match.amount} at ${match.merchantRaw}")
-                        // This only works if the user has already unlocked the vault!
+                if (match != null) {
+                    Log.d("SmsInterceptor", "Parsed transaction: ${match.amount} at ${match.merchantRaw}")
+                    // This only works if the user has already unlocked the vault!
+                    CoroutineScope(Dispatchers.IO).launch {
                         try {
                             repository.addTransaction(
                                 TransactionEntry(
                                     id = 0,
                                     amount = match.amount,
                                     merchant = match.merchantRaw,
-                                    category = "OTHER", // Default to OTHER, user can recategorize later
+                                    category = match.category,
                                     cardHandle = match.accountHandle,
                                     timestamp = Clock.System.now()
                                 )
@@ -47,9 +47,9 @@ class SmsInterceptor : BroadcastReceiver(), KoinComponent {
                         } catch (e: Exception) {
                             Log.e("SmsInterceptor", "Failed to save transaction: ${e.message}", e)
                         }
-                    } else {
-                        Log.d("SmsInterceptor", "SMS did not match transaction pattern")
                     }
+                } else {
+                    Log.d("SmsInterceptor", "SMS did not match transaction pattern")
                 }
             }
         }

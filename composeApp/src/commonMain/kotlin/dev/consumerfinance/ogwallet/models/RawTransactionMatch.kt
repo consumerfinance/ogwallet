@@ -5,6 +5,7 @@ data class RawTransactionMatch(
     val currency: String,
     val accountHandle: String,
     val merchantRaw: String,
+    val category: String,
     val transactionType: TransactionType,
     val rawBody: String
 )

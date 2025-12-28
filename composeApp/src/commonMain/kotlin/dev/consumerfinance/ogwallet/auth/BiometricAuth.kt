@@ -8,4 +8,8 @@ expect class BiometricAuth {
     fun setupMasterPIN(pin: String): Result<String>
     fun verifyMasterPIN(pin: String): Result<String>
     fun isPINSet(): Boolean
+
+    // Onboarding completion tracking
+    fun setOnboardingComplete(complete: Boolean)
+    fun isOnboardingComplete(): Boolean
 }
