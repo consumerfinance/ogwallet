@@ -1,5 +1,28 @@
 # OGWallet
 
+<div align="center">
+  
+[![Latest stable release version](https://img.shields.io/github/v/release/consumnerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumerfinance/ogwallet/releases/latest)
+[![Github downloads](https://img.shields.io/github/downloads/consumerfinance/ogwallet/total.svg?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumnerfinance/ogwallet/releases/)
+[![GitHub repo stars](https://img.shields.io/github/stars/consumerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumnerfinance/ogwallet/stargazers)
+[![Project's License](https://img.shields.io/github/license/consumerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](./LICENCE)
+
+</div>
+
+<div align="center">
+   
+[<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png"
+      alt="Get it on Google Play"
+      height="70">](https://play.google.com/store/apps/details?id=dev.consumerfinance.ogwallet)
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+      alt="Get it on F-Droid"
+      height="70">](https://f-droid.org/app/dev.consumerfinance.ogwallet)
+[<img height="40" src=".github/assets/obtainium-badge.png">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22dev.consumerfinance.ogwallet%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fconsumerfinance%2Fente%22%2C%22author%22%3A%22consumerfinance%22%2C%22name%22%3A%22OG%20Wallet%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22dontSortReleasesList%5C%22%3Atrue%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22econsumerfinance*%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D)
+[<img height="40" src=".github/assets/desktop-badge.png">](https://github.com/consumnerfinance/ogwallet/releases/)
+[<img height="40" src=".github/assets/web-badge.svg">](https://consumerfinance.github.io/ogwallet)
+
+</div>
+
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
 
 ## 🆕 Credit Card Data System
