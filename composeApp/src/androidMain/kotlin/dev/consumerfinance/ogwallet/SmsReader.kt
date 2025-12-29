@@ -5,11 +5,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.Telephony
 import androidx.compose.runtime.Composable
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import dev.consumerfinance.ogwallet.ui.screens.SmsScanProgress
+import dev.consumerfinance.ogwallet.ui.screens.settings.SmsScanProgress
 import dev.consumerfinance.ogwallet.sms.SmsHistoryScanner
 
 actual class SmsReader(private val context: Context) {

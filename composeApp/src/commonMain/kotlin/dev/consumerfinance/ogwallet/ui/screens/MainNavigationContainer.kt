@@ -18,9 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.consumerfinance.ogwallet.getPlatform
-import dev.consumerfinance.ogwallet.ui.screens.*
+import dev.consumerfinance.ogwallet.ui.screens.cc.CreditCardsScreen
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.runtime.LaunchedEffect
+import dev.consumerfinance.ogwallet.ui.screens.settings.SettingsScreen
+import dev.consumerfinance.ogwallet.ui.screens.travel.TravelPlansScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview

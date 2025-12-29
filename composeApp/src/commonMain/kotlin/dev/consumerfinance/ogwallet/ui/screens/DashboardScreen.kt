@@ -47,19 +47,21 @@ fun DashboardScreen(onNavigate: (Int) -> Unit) {
             .map { (cardHandle, cardTransactions) ->
                 val balance = cardTransactions.sumOf { it.amount }
                 CreditCard(
-                    id = cardHandle, // Use cardHandle as ID
-                    name = "$cardHandle Card", // Placeholder name
-                    last4 = cardHandle.takeLast(4), // Assume last 4 digits are in cardHandle
-                    balance = balance,
-                    limit = 0, // Placeholder
-                    availableCredit = 0.0, // Placeholder
-                    gradient = listOf(Color(0xFF334155), Color(0xFF0f172a)), // Default gradient
-                    network = "", // Placeholder
-                    expiry = "", // Placeholder
-                    nextPayment = "", // Placeholder
-                    minPayment = 0.0, // Placeholder
+                    id = cardHandle,
+                    name = "$cardHandle Card",
+                    nickname = null,
+                    cardNumber = cardHandle.takeLast(4),
+                    last4 = cardHandle.takeLast(4),
                     cvv = "",
-                    cardNumber = cardHandle.takeLast(4) // Placeholder
+                    expiry = "",
+                    balance = balance,
+                    limit = 0,
+                    availableCredit = 0.0,
+                    gradient = listOf(Color(0xFF334155), Color(0xFF0f172a)),
+                    network = "",
+                    bankName = "Unknown",
+                    nextPayment = "",
+                    minPayment = 0.0
                 )
             }
     }

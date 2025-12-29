@@ -3,7 +3,7 @@ package dev.consumerfinance.ogwallet
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import dev.consumerfinance.ogwallet.ui.screens.SmsScanProgress
+import dev.consumerfinance.ogwallet.ui.screens.settings.SmsScanProgress
 
 actual class SmsReader {
 

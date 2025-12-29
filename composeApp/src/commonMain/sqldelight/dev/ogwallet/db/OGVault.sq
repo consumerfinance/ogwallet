@@ -70,13 +70,15 @@ CREATE TABLE IF NOT EXISTS vault_config (
     is_biometric_enabled INTEGER AS Boolean NOT NULL,
     theme_mode TEXT AS ThemeMode NOT NULL,
     auto_lock_timeout INTEGER DEFAULT 300,
-    monthly_budget REAL DEFAULT 0.0
+    monthly_budget REAL DEFAULT 0.0,
+    bill_reminder_days INTEGER DEFAULT 3
 );
 
 -- 8. Credit Cards
 CREATE TABLE IF NOT EXISTS credit_card (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
+    nickname TEXT,
     card_number TEXT,
     last4 TEXT NOT NULL,
     cvv TEXT,
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS credit_card (
     credit_limit REAL DEFAULT 10000,
     available_credit REAL DEFAULT 10000,
     network TEXT DEFAULT 'Card',
+    bank_name TEXT DEFAULT 'Unknown',
     next_payment TEXT,
     min_payment REAL DEFAULT 0
 );
@@ -190,8 +193,8 @@ SELECT monthly_budget FROM vault_config WHERE id = 0;
 
 -- Credit Card Queries
 insertCard:
-INSERT INTO credit_card(id, name, card_number, last4, cvv, expiry, balance, credit_limit, available_credit, network, next_payment, min_payment)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO credit_card(id, name, nickname, card_number, last4, cvv, expiry, balance, credit_limit, available_credit, network, bank_name, next_payment, min_payment)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getAllCards:
 SELECT * FROM credit_card ORDER BY name ASC;
@@ -206,6 +209,11 @@ WHERE id = ?;
 
 deleteCard:
 DELETE FROM credit_card WHERE id = ?;
+
+updateCardNickname:
+UPDATE credit_card
+SET nickname = ?
+WHERE id = ?;
 
 -- Credit Card Bill Queries
 insertBill:

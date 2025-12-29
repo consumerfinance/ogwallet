@@ -16,6 +16,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
         dbManager.queries?.insertCard(
             id = card.id,
             name = card.name,
+            nickname = card.nickname,
             card_number = card.cardNumber,
             last4 = card.last4,
             cvv = card.cvv,
@@ -24,6 +25,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
             credit_limit = card.limit.toDouble(),
             available_credit = card.availableCredit,
             network = card.network,
+            bank_name = card.bankName,
             next_payment = card.nextPayment,
             min_payment = card.minPayment
         )
@@ -36,6 +38,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
                     CreditCard(
                         id = row.id,
                         name = row.name,
+                        nickname = row.nickname,
                         cardNumber = row.card_number ?: "",
                         last4 = row.last4,
                         cvv = row.cvv ?: "",
@@ -45,6 +48,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
                         availableCredit = row.available_credit ?: 0.0,
                         gradient = listOf(Color.Gray, Color.DarkGray),
                         network = row.network ?: "Card",
+                        bankName = row.bank_name ?: "Unknown",
                         nextPayment = row.next_payment,
                         minPayment = row.min_payment ?: 0.0
                     )
@@ -61,6 +65,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
                 CreditCard(
                     id = it.id,
                     name = it.name,
+                    nickname = it.nickname,
                     cardNumber = it.card_number ?: "",
                     last4 = it.last4,
                     cvv = it.cvv ?: "",
@@ -70,6 +75,7 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
                     availableCredit = it.available_credit ?: 0.0,
                     gradient = listOf(Color.Gray, Color.DarkGray),
                     network = it.network ?: "Card",
+                    bankName = it.bank_name ?: "Unknown",
                     nextPayment = it.next_payment,
                     minPayment = it.min_payment ?: 0.0
                 )
@@ -83,5 +89,11 @@ class CreditCardRepository(private val dbManager: DatabaseManager) {
 
     suspend fun deleteCard(cardId: String) = withContext(Dispatchers.Default) {
         dbManager.queries?.deleteCard(cardId)
+    }
+
+    suspend fun updateNickname(cardId: String, nickname: String?) {
+        withContext(Dispatchers.Default) {
+            dbManager.queries?.updateCardNickname(nickname, cardId)
+        }
     }
 }

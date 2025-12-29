@@ -13,6 +13,25 @@ plugins {
     kotlin("native.cocoapods")
 }
 
+fun detectTarget(): String {
+    val hostOs = when (val os = System.getProperty("os.name").lowercase()) {
+        "mac os x" -> "macos"
+        else -> os.split(" ").first()
+    }
+    val hostArch = when (val arch = System.getProperty("os.arch").lowercase()) {
+        "x86_64" -> "amd64"
+        "arm64" -> "aarch64"
+        else -> arch
+    }
+    val renderer = when (hostOs) {
+        "macos" -> "metal"
+        else -> "opengl"
+    }
+    return "${hostOs}-${hostArch}-${renderer}"
+}
+
+
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -74,6 +93,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.kotlinx.coroutines.core)
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(libs.maplibre.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -83,6 +103,12 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.sqldelight.jdbc.driver)
             implementation("org.xerial:sqlite-jdbc:3.45.0.0")
+            implementation("org.maplibre.compose:maplibre-compose:0.12.1")
+            runtimeOnly("org.maplibre.compose:maplibre-native-bindings-jni:0.12.1") {
+                capabilities {
+                    requireCapability("org.maplibre.compose:maplibre-native-bindings-jni-${detectTarget()}")
+                }
+            }
         }
         wasmJsMain.dependencies {
             implementation(libs.sqldelight.web.driver)
@@ -103,6 +129,8 @@ kotlin {
         pod("SQLCipher") {
             version = "~> 4.0" // Version of the ACTUAL SQLCipher library
         }
+
+        pod("MapLibre", "6.17.1")
 
         podfile = project.file("../iosApp/Podfile")
     }

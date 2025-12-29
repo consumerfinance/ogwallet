@@ -1,6 +1,8 @@
 PODS:
-  - composeApp (1.0.0):
+  - composeApp (0.5.0):
+    - MapLibre (= 6.17.1)
     - SQLCipher (~> 4.0)
+  - MapLibre (6.17.1)
   - SQLCipher (4.10.0):
     - SQLCipher/standard (= 4.10.0)
   - SQLCipher/common (4.10.0)
@@ -12,6 +14,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - MapLibre
     - SQLCipher
 
 EXTERNAL SOURCES:
@@ -19,7 +22,8 @@ EXTERNAL SOURCES:
     :path: "../composeApp"
 
 SPEC CHECKSUMS:
-  composeApp: 74e21ad1d76b34b83d34c8c3600aebbf23dff425
+  composeApp: 8f541fb217a03a5040a41e327ffc1646e1a30f3a
+  MapLibre: 4602773419937bfa96189c53b90d1055b8ef4f29
   SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
 
 PODFILE CHECKSUM: 3daf2446134294afba444bd8ab3503273bbd3a19

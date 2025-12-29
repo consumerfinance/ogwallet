@@ -21,6 +21,7 @@ import dev.consumerfinance.ogwallet.services.MboxImportService
 import dev.consumerfinance.ogwallet.util.MboxImportResult
 import dev.consumerfinance.ogwallet.utils.formatCurrency
 import dev.consumerfinance.ogwallet.getPlatform
+import dev.consumerfinance.ogwallet.ui.screens.settings.SmsScannerScreenWrapper
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.io.BufferedReader

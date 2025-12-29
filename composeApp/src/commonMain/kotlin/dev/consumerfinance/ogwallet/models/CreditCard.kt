@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 data class CreditCard(
     val id: String,
     val name: String,
+    val nickname: String?,
     val cardNumber: String,
     val last4: String,
     val cvv: String,
@@ -14,6 +15,7 @@ data class CreditCard(
     val availableCredit: Double,
     val gradient: List<Color>,
     val network: String,
+    val bankName: String,
     val nextPayment: String?,
     val minPayment: Double
 )

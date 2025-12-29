@@ -2,7 +2,7 @@ package dev.consumerfinance.ogwallet
 
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.Flow
-import dev.consumerfinance.ogwallet.ui.screens.SmsScanProgress
+import dev.consumerfinance.ogwallet.ui.screens.settings.SmsScanProgress
 
 expect class SmsReader {
     @Composable
