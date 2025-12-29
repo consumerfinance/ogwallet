@@ -20,10 +20,12 @@ from models import (
     DataRepository,
     MicrosoftFormsResponse,
     ProcessingStats,
-    OfferCategory
+    OfferCategory,
+    ScrapedPDF
 )
 from forms_processor import FormsProcessor
 from git_manager import GitDataManager
+from scrapers import ScraperManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +60,7 @@ app.add_middleware(
 # Initialize processors
 forms_processor = FormsProcessor(settings.forms_api_key, settings.forms_form_id)
 git_manager = GitDataManager(settings.data_repo_path, settings.data_repo_url)
+scraper_manager = ScraperManager()
 
 # In-memory stats
 processing_stats = ProcessingStats()
@@ -167,9 +170,148 @@ async def get_benefits(card_name: str = None):
     """Get credit card benefits"""
     data_repo = git_manager.load_data()
     benefits = data_repo.benefits
-    
+
     if card_name:
         benefits = [b for b in benefits if b.card_name.lower() == card_name.lower()]
-    
+
     return benefits
+
+
+@app.get("/pdfs", response_model=List[ScrapedPDF])
+async def get_pdfs(bank: str = None):
+    """Get scraped PDF documents"""
+    data_repo = git_manager.load_data()
+    pdfs = data_repo.scraped_pdfs
+
+    if bank:
+        pdfs = [p for p in pdfs if p.bank.lower() == bank.lower()]
+
+    return pdfs
+
+
+@app.post("/scrape/{bank_code}")
+async def scrape_bank(bank_code: str, background_tasks: BackgroundTasks):
+    """
+    Scrape data from a specific bank
+    Supported banks: hdfc, icici, sbi
+    """
+    try:
+        logger.info(f"Starting scrape for bank: {bank_code}")
+
+        # Scrape the bank
+        scraped_data = scraper_manager.scrape_bank(bank_code)
+
+        # Load existing data
+        data_repo = git_manager.load_data()
+
+        # Add scraped offers
+        for offer in scraped_data.get('offers', []):
+            # Check for duplicates
+            if not any(o.id == offer.id for o in data_repo.offers):
+                data_repo.offers.append(offer)
+
+        # Add scraped benefits
+        for benefit in scraped_data.get('benefits', []):
+            if not any(b.id == benefit.id for b in data_repo.benefits):
+                data_repo.benefits.append(benefit)
+
+        # Add scraped PDFs
+        for pdf_data in scraped_data.get('pdfs', []):
+            pdf = ScrapedPDF(**pdf_data)
+            # Check for duplicates by URL
+            if not any(p.url == pdf.url for p in data_repo.scraped_pdfs):
+                data_repo.scraped_pdfs.append(pdf)
+
+        # Update timestamp
+        data_repo.last_updated = datetime.now()
+
+        # Save data
+        git_manager.save_data(data_repo)
+
+        # Commit and push
+        if settings.auto_commit:
+            background_tasks.add_task(
+                git_manager.commit_and_push,
+                f"Scrape: Updated data from {bank_code}"
+            )
+
+        return {
+            "status": "success",
+            "bank": bank_code,
+            "offers_added": len(scraped_data.get('offers', [])),
+            "benefits_added": len(scraped_data.get('benefits', [])),
+            "pdfs_found": len(scraped_data.get('pdfs', []))
+        }
+
+    except Exception as e:
+        logger.error(f"Error scraping {bank_code}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scrape-all")
+async def scrape_all_banks(background_tasks: BackgroundTasks):
+    """
+    Scrape data from all supported banks
+    """
+    try:
+        logger.info("Starting scrape for all banks")
+
+        # Scrape all banks
+        all_scraped_data = scraper_manager.scrape_all_banks()
+
+        # Load existing data
+        data_repo = git_manager.load_data()
+
+        total_offers = 0
+        total_benefits = 0
+        total_pdfs = 0
+
+        for bank_code, scraped_data in all_scraped_data.items():
+            if 'error' in scraped_data:
+                logger.error(f"Error scraping {bank_code}: {scraped_data['error']}")
+                continue
+
+            # Add scraped offers
+            for offer in scraped_data.get('offers', []):
+                if not any(o.id == offer.id for o in data_repo.offers):
+                    data_repo.offers.append(offer)
+                    total_offers += 1
+
+            # Add scraped benefits
+            for benefit in scraped_data.get('benefits', []):
+                if not any(b.id == benefit.id for b in data_repo.benefits):
+                    data_repo.benefits.append(benefit)
+                    total_benefits += 1
+
+            # Add scraped PDFs
+            for pdf_data in scraped_data.get('pdfs', []):
+                pdf = ScrapedPDF(**pdf_data)
+                if not any(p.url == pdf.url for p in data_repo.scraped_pdfs):
+                    data_repo.scraped_pdfs.append(pdf)
+                    total_pdfs += 1
+
+        # Update timestamp
+        data_repo.last_updated = datetime.now()
+
+        # Save data
+        git_manager.save_data(data_repo)
+
+        # Commit and push
+        if settings.auto_commit:
+            background_tasks.add_task(
+                git_manager.commit_and_push,
+                f"Scrape: Updated data from all banks - {total_offers} offers, {total_benefits} benefits"
+            )
+
+        return {
+            "status": "success",
+            "total_offers_added": total_offers,
+            "total_benefits_added": total_benefits,
+            "total_pdfs_found": total_pdfs,
+            "banks_processed": list(all_scraped_data.keys())
+        }
+
+    except Exception as e:
+        logger.error(f"Error scraping all banks: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 

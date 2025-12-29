@@ -108,6 +108,20 @@ CREATE TABLE IF NOT EXISTS credit_card_bill (
     reminder_sent INTEGER AS Boolean DEFAULT 0
 );
 
+-- 10. Travel Plans
+CREATE TABLE IF NOT EXISTS trip (
+    id TEXT PRIMARY KEY,
+    destination TEXT NOT NULL,
+    dates TEXT NOT NULL,
+    status TEXT NOT NULL,
+    points_used INTEGER DEFAULT 0,
+    savings INTEGER DEFAULT 0,
+    emoji TEXT DEFAULT '✈️',
+    bookings INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
 --- QUERIES ---
 
 -- Transaction Queries with Normalization Join
@@ -242,3 +256,22 @@ WHERE id = ?;
 
 getAllBills:
 SELECT * FROM credit_card_bill ORDER BY due_date DESC;
+
+-- Trip Queries
+insertTrip:
+INSERT INTO trip(id, destination, dates, status, points_used, savings, emoji, bookings, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllTrips:
+SELECT * FROM trip ORDER BY created_at DESC;
+
+getTripById:
+SELECT * FROM trip WHERE id = ?;
+
+updateTrip:
+UPDATE trip
+SET destination = ?, dates = ?, status = ?, points_used = ?, savings = ?, emoji = ?, bookings = ?, updated_at = ?
+WHERE id = ?;
+
+deleteTrip:
+DELETE FROM trip WHERE id = ?;

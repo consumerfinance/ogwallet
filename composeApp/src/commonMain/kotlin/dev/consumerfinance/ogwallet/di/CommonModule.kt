@@ -4,6 +4,7 @@ import dev.consumerfinance.ogwallet.db.BillRepository
 import dev.consumerfinance.ogwallet.db.CreditCardRepository
 import dev.consumerfinance.ogwallet.db.DatabaseManager
 import dev.consumerfinance.ogwallet.db.TransactionRepository
+import dev.consumerfinance.ogwallet.db.TripRepository
 import org.koin.dsl.module
 
 import dev.consumerfinance.ogwallet.services.DataExportService
@@ -14,6 +15,7 @@ val commonModule = module {
     single { TransactionRepository(get()) }
     single { BillRepository(get()) }
     single { CreditCardRepository(get()) }
+    single { TripRepository(get()) }
     single { DataExportService(get(), get()) } // Inject TransactionRepository and BillRepository
     single { SmsParser(get()) }
 }

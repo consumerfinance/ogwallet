@@ -19,13 +19,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dev.consumerfinance.ogwallet.models.travel.PlanningTab
 import dev.consumerfinance.ogwallet.models.travel.RoutePoint
+import dev.consumerfinance.ogwallet.models.travel.Trip
 import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TravelPlansScreen() {
+fun TravelPlansScreen(
+    trip: Trip,
+    onBackToSelect: () -> Unit
+) {
     var routes by remember {
         mutableStateOf(
             listOf(
@@ -74,18 +78,26 @@ fun TravelPlansScreen() {
                         )
                         Column {
                             Text(
-                                text = "Travel Planner",
+                                text = trip.destination,
                                 style = if (isMobile) MaterialTheme.typography.titleLarge
                                 else MaterialTheme.typography.headlineSmall
                             )
                             if (!isMobile) {
                                 Text(
-                                    text = "Plan your journey",
+                                    text = trip.dates,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                                 )
                             }
                         }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackToSelect) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back to trip selection"
+                        )
                     }
                 },
                 actions = {
@@ -101,7 +113,8 @@ fun TravelPlansScreen() {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }

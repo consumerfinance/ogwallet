@@ -93,11 +93,21 @@ class MicrosoftFormsResponse(BaseModel):
     submitter_email: Optional[str] = None
 
 
+class ScrapedPDF(BaseModel):
+    """Model for scraped PDF documents"""
+    url: str
+    title: str
+    content: str  # Extracted text content
+    bank: str
+    scraped_at: datetime = Field(default_factory=datetime.now)
+
+
 class DataRepository(BaseModel):
     """Container for all credit card data"""
     offers: List[CreditCardOffer] = Field(default_factory=list)
     benefits: List[CreditCardBenefit] = Field(default_factory=list)
     redemption_options: List[RedemptionOption] = Field(default_factory=list)
+    scraped_pdfs: List[ScrapedPDF] = Field(default_factory=list)
     last_updated: datetime = Field(default_factory=datetime.now)
     version: str = "1.0.0"
 

@@ -18,16 +18,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.consumerfinance.ogwallet.getPlatform
+import dev.consumerfinance.ogwallet.models.travel.Trip
 import dev.consumerfinance.ogwallet.ui.screens.cc.CreditCardsScreen
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import dev.consumerfinance.ogwallet.ui.screens.settings.SettingsScreen
 import dev.consumerfinance.ogwallet.ui.screens.travel.TravelPlansScreen
+import dev.consumerfinance.ogwallet.ui.screens.travel.TravelPlanSelectScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun MainNavigationContainer() {
     var selectedTab by remember { mutableStateOf(0) }
+    var selectedTrip by remember { mutableStateOf<Trip?>(null) }
 
     val navigationItems = listOf(
         NavigationItem("Home", Icons.Filled.Home, "home"),
@@ -48,15 +51,21 @@ fun MainNavigationContainer() {
         // Desktop/Web layout with side navigation
         DesktopNavigationLayout(
             selectedTab = selectedTab,
+            selectedTrip = selectedTrip,
             navigationItems = navigationItems,
-            onTabSelected = { selectedTab = it }
+            onTabSelected = { selectedTab = it },
+            onTripSelected = { selectedTrip = it },
+            onBackToSelect = { selectedTrip = null }
         )
     } else {
         // Mobile layout with bottom navigation
         MobileNavigationLayout(
             selectedTab = selectedTab,
+            selectedTrip = selectedTrip,
             navigationItems = navigationItems,
-            onTabSelected = { selectedTab = it }
+            onTabSelected = { selectedTab = it },
+            onTripSelected = { selectedTrip = it },
+            onBackToSelect = { selectedTrip = null }
         )
     }
 }
@@ -65,8 +74,11 @@ fun MainNavigationContainer() {
 @Composable
 fun DesktopNavigationLayout(
     selectedTab: Int,
+    selectedTrip: Trip?,
     navigationItems: List<NavigationItem>,
-    onTabSelected: (Int) -> Unit
+    onTabSelected: (Int) -> Unit,
+    onTripSelected: (Trip) -> Unit,
+    onBackToSelect: () -> Unit
 ) {
     Row(modifier = Modifier.fillMaxSize()) {
         // Main content area (left side)
@@ -80,7 +92,13 @@ fun DesktopNavigationLayout(
                 0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
                 1 -> CreditCardsScreen()
                 2 -> BudgetScreen()
-                3 -> TravelPlansScreen()
+                3 -> {
+                    if (selectedTrip == null) {
+                        TravelPlanSelectScreen(onTripSelected = onTripSelected)
+                    } else {
+                        TravelPlansScreen(trip = selectedTrip, onBackToSelect = onBackToSelect)
+                    }
+                }
                 4 -> BudgetAnalyticsScreen()
                 5 -> SettingsScreen()
             }
@@ -226,8 +244,11 @@ fun NavigationDrawerItem(
 @Composable
 fun MobileNavigationLayout(
     selectedTab: Int,
+    selectedTrip: Trip?,
     navigationItems: List<NavigationItem>,
-    onTabSelected: (Int) -> Unit
+    onTabSelected: (Int) -> Unit,
+    onTripSelected: (Trip) -> Unit,
+    onBackToSelect: () -> Unit
 ) {
             Scaffold(
                 topBar = {
@@ -262,7 +283,13 @@ fun MobileNavigationLayout(
                         0 -> DashboardScreen(onNavigate = { tabIndex -> onTabSelected(tabIndex) })
                         1 -> CreditCardsScreen()
                         2 -> BudgetScreen()
-                        3 -> TravelPlansScreen()
+                        3 -> {
+                            if (selectedTrip == null) {
+                                TravelPlanSelectScreen(onTripSelected = onTripSelected)
+                            } else {
+                                TravelPlansScreen(trip = selectedTrip, onBackToSelect = onBackToSelect)
+                            }
+                        }
                         4 -> BudgetAnalyticsScreen()
                         5 -> SettingsScreen()
                     }
