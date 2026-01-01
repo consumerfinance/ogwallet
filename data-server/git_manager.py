@@ -12,7 +12,7 @@ from typing import Optional
 import git
 from git import Repo
 
-from models import DataRepository, CreditCardOffer, CreditCardBenefit, RedemptionOption
+from models import DataRepository, CreditCardOffer, CreditCardBenefit, RedemptionOption, ScrapedPDF
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +114,7 @@ To contribute new offers or benefits, please fill out our Microsoft Forms survey
                 offers=[CreditCardOffer(**o) for o in data.get('offers', [])],
                 benefits=[CreditCardBenefit(**b) for b in data.get('benefits', [])],
                 redemption_options=[RedemptionOption(**r) for r in data.get('redemption_options', [])],
+                scraped_pdfs=[ScrapedPDF(**p) for p in data.get('scraped_pdfs', [])],
                 last_updated=datetime.fromisoformat(data.get('last_updated', datetime.now().isoformat())),
                 version=data.get('version', '1.0.0')
             )

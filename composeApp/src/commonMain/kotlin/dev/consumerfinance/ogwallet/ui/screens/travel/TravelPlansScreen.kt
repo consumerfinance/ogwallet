@@ -20,6 +20,11 @@ import androidx.compose.ui.window.DialogProperties
 import dev.consumerfinance.ogwallet.models.travel.PlanningTab
 import dev.consumerfinance.ogwallet.models.travel.RoutePoint
 import dev.consumerfinance.ogwallet.models.travel.Trip
+import dev.consumerfinance.ogwallet.ui.screens.travel.panels.ActivitiesPanel
+import dev.consumerfinance.ogwallet.ui.screens.travel.panels.CostTrackerPanel
+import dev.consumerfinance.ogwallet.ui.screens.travel.panels.CreditCardRewardsPanel
+import dev.consumerfinance.ogwallet.ui.screens.travel.panels.StopoverHintsPanel
+import dev.consumerfinance.ogwallet.ui.screens.travel.panels.TravelChecklistPanel
 import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Clock
