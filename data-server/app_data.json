@@ -1,0 +1,20 @@
+{
+  "offers": [
+    {
+      "id": "sample-chase-sapphire",
+      "title": "Chase Sapphire Preferred: 3x on Travel",
+      "description": "Earn 3x points on travel booked directly or through Chase Travel",
+      "card_name": "Chase Sapphire Preferred",
+      "bank_name": "Chase",
+      "category": "travel",
+      "expiry_date": null,
+      "terms": null,
+      "emoji": "💳",
+      "gradient_colors": [
+        "#3b82f6",
+        "#06b6d4"
+      ],
+      "is_active": true,
+      "min_spend": null,
+      "max_benefit": null,
+      "created_at": 

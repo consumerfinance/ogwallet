@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 import time
 import re
 
-from models import CreditCardOffer, CreditCardBenefit, BenefitType, OfferCategory
+from models import CreditCardOffer, CreditCardBenefit, BenefitType, OfferCategory, TravelHack
 
 logger = logging.getLogger(__name__)
 
@@ -427,6 +427,101 @@ class SBIScraper(BaseScraper):
         return pdfs
 
 
+class CreditCardRewardsScraper(BaseScraper):
+    """Scraper for credit card rewards from general websites"""
+
+    def __init__(self):
+        super().__init__("Credit Card Rewards", "https://www.nerdwallet.com")
+
+    def scrape_credit_cards(self) -> List[CreditCardOffer]:
+        """Scrape credit card offers from NerdWallet"""
+        offers = []
+        # For demo, we'll create sample offers. In real implementation, scrape actual sites
+        offers.append(CreditCardOffer(
+            id="nerdwallet-chase-sapphire",
+            title="Chase Sapphire Preferred: 3x on Travel",
+            description="Earn 3x points on travel booked directly or through Chase Travel",
+            card_name="Chase Sapphire Preferred",
+            bank_name="Chase",
+            category=OfferCategory.TRAVEL,
+            source="nerdwallet"
+        ))
+        offers.append(CreditCardOffer(
+            id="nerdwallet-amex-platinum",
+            title="Amex Platinum: 5x on Flights",
+            description="Earn 5x points on flights booked directly with airlines",
+            card_name="American Express Platinum",
+            bank_name="American Express",
+            category=OfferCategory.TRAVEL,
+            source="nerdwallet"
+        ))
+        return offers
+
+    def scrape_lounge_info(self) -> List[CreditCardBenefit]:
+        return []
+
+    def scrape_pdfs(self) -> List[Dict]:
+        return []
+
+
+class TravelHacksScraper(BaseScraper):
+    """Scraper for travel hacks from various websites"""
+
+    def __init__(self):
+        super().__init__("Travel Hacks", "https://www.secretflying.com")
+
+    def scrape_credit_cards(self) -> List[CreditCardOffer]:
+        return []
+
+    def scrape_lounge_info(self) -> List[CreditCardBenefit]:
+        return []
+
+    def scrape_pdfs(self) -> List[Dict]:
+        return []
+
+    def scrape_travel_hacks(self) -> List[TravelHack]:
+        """Scrape travel hacks"""
+        hacks = []
+        # Sample hacks - in real implementation, scrape from sites
+        hacks.append(TravelHack(
+            id="hack-stopover-icelandair",
+            title="Free Stopover in Iceland",
+            description="Get a free stopover in Reykjavik when flying Icelandair transatlantic routes",
+            category="stopover",
+            source="secretflying",
+            url="https://www.secretflying.com/icelandair-stopover/",
+            tags=["icelandair", "stopover", "free"],
+            difficulty="easy",
+            savings_potential="$500+",
+            emoji="🗻"
+        ))
+        hacks.append(TravelHack(
+            id="hack-error-fare",
+            title="Book Error Fares",
+            description="Find and book airline error fares for huge savings",
+            category="error_fare",
+            source="secretflying",
+            url="https://www.secretflying.com/error-fares/",
+            tags=["error fare", "cheap flights"],
+            difficulty="medium",
+            savings_potential="Up to 90% off",
+            emoji="💸"
+        ))
+        hacks.append(TravelHack(
+            id="hack-credit-card-points",
+            title="Maximize Credit Card Points",
+            description="Use the right credit card for each purchase category to maximize rewards",
+            category="credit_card",
+            source="thepointsguy",
+            url="https://thepointsguy.com/guide/credit-cards/",
+            tags=["credit cards", "points", "rewards"],
+            difficulty="easy",
+            savings_potential="$100-500/year",
+            emoji="💳"
+        ))
+        return hacks
+
+
 class ScraperManager:
     """Manager for all bank scrapers"""
 
@@ -434,7 +529,9 @@ class ScraperManager:
         self.scrapers = {
             'hdfc': HDFCScraper(),
             'icici': ICICIScraper(),
-            'sbi': SBIScraper()
+            'sbi': SBIScraper(),
+            'rewards': CreditCardRewardsScraper(),
+            'hacks': TravelHacksScraper()
         }
 
     def scrape_bank(self, bank_code: str) -> Dict:
@@ -449,11 +546,13 @@ class ScraperManager:
         results = {}
         for bank_code, scraper in self.scrapers.items():
             try:
-                results[bank_code] = scraper.scrape_all()
+                data = scraper.scrape_all()
+                # Add travel hacks if the scraper has the method
+                if hasattr(scraper, 'scrape_travel_hacks'):
+                    data['travel_hacks'] = scraper.scrape_travel_hacks()
+                results[bank_code] = data
                 time.sleep(1)  # Be respectful to servers
             except Exception as e:
                 logger.error(f"Error scraping {bank_code}: {e}")
                 results[bank_code] = {'error': str(e)}
 
-        return results</content>
-</xai:function_call">The file has been created successfully.

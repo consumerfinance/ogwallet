@@ -108,8 +108,27 @@ class DataRepository(BaseModel):
     benefits: List[CreditCardBenefit] = Field(default_factory=list)
     redemption_options: List[RedemptionOption] = Field(default_factory=list)
     scraped_pdfs: List[ScrapedPDF] = Field(default_factory=list)
+    travel_hacks: List[TravelHack] = Field(default_factory=list)
     last_updated: datetime = Field(default_factory=datetime.now)
     version: str = "1.0.0"
+
+
+class TravelHack(BaseModel):
+    """Model for travel hacks and tips"""
+    id: str
+    title: str
+    description: str
+    category: str  # e.g., "stopover", "error_fare", "credit_card", "booking_hack"
+    source: str
+    url: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    difficulty: str = "easy"  # easy, medium, hard
+    savings_potential: Optional[str] = None
+    emoji: str = "✈️"
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    upvotes: int = 0
+    downvotes: int = 0
 
 
 class ProcessingStats(BaseModel):

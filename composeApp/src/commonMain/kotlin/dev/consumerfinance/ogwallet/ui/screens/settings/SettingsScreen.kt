@@ -87,7 +87,7 @@ fun SettingsScreen() {
         }
     }
 
-    // Check if we're on Android
+    // Platform detection for Android-specific features
     val platform = getPlatform()
     val isAndroid = platform.name.contains("Android")
 
@@ -255,22 +255,20 @@ private fun SettingsScreenContent(
         // Import & Data Section
         item {
             SettingsSection(title = "Import & Data") {
-                if (isAndroid) {
-                    SettingsItem(
-                        icon = Icons.Default.Message,
-                        title = "Import from SMS",
-                        subtitle = "Scan SMS messages for transactions",
-                        onClick = onOpenSmsScanner
-                    )
-                }
-                
+                SettingsItem(
+                    icon = Icons.Default.Message,
+                    title = "Import from SMS",
+                    subtitle = "Scan SMS messages for transactions",
+                    onClick = onOpenSmsScanner
+                )
+
                 SettingsItem(
                     icon = Icons.Default.Email,
                     title = "Import from Mbox",
                     subtitle = "Import transactions from email files",
                     onClick = onOpenMboxImport
                 )
-                
+
                 SettingsItem(
                     icon = Icons.Default.CloudUpload,
                     title = "Export Data",

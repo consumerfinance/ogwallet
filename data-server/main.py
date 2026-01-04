@@ -21,7 +21,8 @@ from models import (
     MicrosoftFormsResponse,
     ProcessingStats,
     OfferCategory,
-    ScrapedPDF
+    ScrapedPDF,
+    TravelHack
 )
 from forms_processor import FormsProcessor
 from git_manager import GitDataManager
@@ -189,6 +190,18 @@ async def get_pdfs(bank: str = None):
     return pdfs
 
 
+@app.get("/travel-hacks", response_model=List[TravelHack])
+async def get_travel_hacks(category: str = None):
+    """Get travel hacks and tips"""
+    data_repo = git_manager.load_data()
+    hacks = data_repo.travel_hacks
+
+    if category:
+        hacks = [h for h in hacks if h.category == category]
+
+    return hacks
+
+
 @app.post("/scrape/{bank_code}")
 async def scrape_bank(bank_code: str, background_tasks: BackgroundTasks):
     """
@@ -222,26 +235,32 @@ async def scrape_bank(bank_code: str, background_tasks: BackgroundTasks):
             if not any(p.url == pdf.url for p in data_repo.scraped_pdfs):
                 data_repo.scraped_pdfs.append(pdf)
 
-        # Update timestamp
-        data_repo.last_updated = datetime.now()
+        # Add scraped travel hacks
+        for hack in scraped_data.get('travel_hacks', []):
+            if not any(h.id == hack.id for h in data_repo.travel_hacks):
+                data_repo.travel_hacks.append(hack)
 
-        # Save data
-        git_manager.save_data(data_repo)
+    # Update timestamp
+    data_repo.last_updated = datetime.now()
 
-        # Commit and push
-        if settings.auto_commit:
-            background_tasks.add_task(
-                git_manager.commit_and_push,
-                f"Scrape: Updated data from {bank_code}"
-            )
+    # Save data
+    git_manager.save_data(data_repo)
 
-        return {
-            "status": "success",
-            "bank": bank_code,
-            "offers_added": len(scraped_data.get('offers', [])),
-            "benefits_added": len(scraped_data.get('benefits', [])),
-            "pdfs_found": len(scraped_data.get('pdfs', []))
-        }
+    # Commit and push
+    if settings.auto_commit:
+        background_tasks.add_task(
+            git_manager.commit_and_push,
+            f"Scrape: Updated data from {bank_code}"
+        )
+
+    return {
+        "status": "success",
+        "bank": bank_code,
+        "offers_added": len(scraped_data.get('offers', [])),
+        "benefits_added": len(scraped_data.get('benefits', [])),
+        "pdfs_found": len(scraped_data.get('pdfs', [])),
+        "hacks_added": len(scraped_data.get('travel_hacks', []))
+    }
 
     except Exception as e:
         logger.error(f"Error scraping {bank_code}: {e}")
@@ -265,6 +284,7 @@ async def scrape_all_banks(background_tasks: BackgroundTasks):
         total_offers = 0
         total_benefits = 0
         total_pdfs = 0
+        total_hacks = 0
 
         for bank_code, scraped_data in all_scraped_data.items():
             if 'error' in scraped_data:
@@ -290,6 +310,12 @@ async def scrape_all_banks(background_tasks: BackgroundTasks):
                     data_repo.scraped_pdfs.append(pdf)
                     total_pdfs += 1
 
+            # Add scraped travel hacks
+            for hack in scraped_data.get('travel_hacks', []):
+                if not any(h.id == hack.id for h in data_repo.travel_hacks):
+                    data_repo.travel_hacks.append(hack)
+                    total_hacks += 1
+
         # Update timestamp
         data_repo.last_updated = datetime.now()
 
@@ -308,6 +334,7 @@ async def scrape_all_banks(background_tasks: BackgroundTasks):
             "total_offers_added": total_offers,
             "total_benefits_added": total_benefits,
             "total_pdfs_found": total_pdfs,
+            "total_hacks_added": total_hacks,
             "banks_processed": list(all_scraped_data.keys())
         }
 
