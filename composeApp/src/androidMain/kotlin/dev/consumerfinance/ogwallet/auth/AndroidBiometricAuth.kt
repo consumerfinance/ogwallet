@@ -3,6 +3,7 @@ package dev.consumerfinance.ogwallet.auth
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
@@ -15,6 +16,9 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 import java.util.UUID
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 actual class BiometricAuth(private val activity: FragmentActivity) {
     actual fun isBiometricAvailable(): Boolean {
@@ -25,10 +29,62 @@ actual class BiometricAuth(private val activity: FragmentActivity) {
         ) == BiometricManager.BIOMETRIC_SUCCESS
     }
 
+    actual fun isBiometricEnabled(): Boolean {
+        // For Android, biometric is enabled if available and user has enabled it in settings
+        return try {
+            val prefs = getSharedPreferences()
+            prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false) && isBiometricAvailable()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    actual fun setBiometricEnabled(enabled: Boolean) {
+        try {
+            val prefs = getSharedPreferences()
+            val editor = prefs.edit()
+            editor.putBoolean(KEY_BIOMETRIC_ENABLED, enabled)
+            editor.apply()
+        } catch (e: Exception) {
+            // Handle error if needed
+        }
+    }
+
     actual suspend fun authenticate(): Result<String> {
-        // For now, always fail biometric auth to force PIN fallback
-        // TODO: Implement proper biometric authentication
-        return Result.failure(Exception("Biometric authentication not implemented"))
+        return suspendCancellableCoroutine { continuation ->
+            try {
+                val executor = androidx.core.content.ContextCompat.getMainExecutor(activity)
+                val biometricPrompt = BiometricPrompt(activity, executor,
+                    object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            super.onAuthenticationSucceeded(result)
+                            // Return the passphrase from keystore or generate one
+                            val passphrase = retrieveKeyFromKeystore()
+                            continuation.resume(Result.success(passphrase))
+                        }
+
+                        override fun onAuthenticationFailed() {
+                            super.onAuthenticationFailed()
+                            continuation.resume(Result.failure(Exception("Authentication failed")))
+                        }
+
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                            super.onAuthenticationError(errorCode, errString)
+                            continuation.resume(Result.failure(Exception("Authentication error: $errString")))
+                        }
+                    })
+
+                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("Unlock OGWallet")
+                    .setSubtitle("Use your biometric credential")
+                    .setNegativeButtonText("Use PIN")
+                    .build()
+
+                biometricPrompt.authenticate(promptInfo)
+            } catch (e: Exception) {
+                continuation.resume(Result.failure(Exception("Biometric setup failed: ${e.message}")))
+            }
+        }
     }
 
     private fun retrieveKeyFromKeystore(): String {
@@ -44,6 +100,7 @@ actual class BiometricAuth(private val activity: FragmentActivity) {
     private val KEY_IV = "iv"
     private val KEY_SALT = "salt"
     private val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+    private val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
 
     private fun getSharedPreferences(): SharedPreferences {
         return OGWalletApplication.appContext.getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE)

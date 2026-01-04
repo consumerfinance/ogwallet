@@ -168,6 +168,17 @@ class DatabaseManager(private val driverFactory: DriverFactory) {
             ?.map { it?.monthly_budget ?: 0.0 } ?: kotlinx.coroutines.flow.flowOf(0.0)
     }
 
+    fun getBiometricEnabled(): Flow<Boolean> {
+        return queries?.getBiometricEnabled()
+            ?.asFlow()
+            ?.mapToOneOrNull(Dispatchers.Default)
+            ?.map { it ?: false } ?: kotlinx.coroutines.flow.flowOf(false)
+    }
+
+    fun updateBiometricEnabled(enabled: Boolean) {
+        queries?.updateBiometricEnabled(enabled)
+    }
+
     fun lock() {
         database = null
         unlockTime = 0

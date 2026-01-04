@@ -47,9 +47,14 @@ fun LockScreen(dbManager: DatabaseManager) {
                 onError = { errorMessage = it }
             )
         } else {
-            // For mobile, use biometric auth
-            authenticate(biometricAuth, dbManager, scope) { error ->
-                errorMessage = error
+            // For mobile, use biometric auth if enabled
+            if (biometricAuth.isBiometricEnabled()) {
+                authenticate(biometricAuth, dbManager, scope) { error ->
+                    errorMessage = error
+                }
+            } else {
+                // If biometric not enabled, go directly to PIN entry
+                authState = AuthState.PIN_ENTRY_REQUIRED
             }
         }
     }

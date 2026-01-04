@@ -15,35 +15,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import dev.consumerfinance.ogwallet.db.TripRepository
 import dev.consumerfinance.ogwallet.models.travel.ChecklistItem
+import kotlinx.coroutines.launch
 
 @Composable
-fun TravelChecklistPanel() {
-    var items by remember {
-        mutableStateOf(
-            listOf(
-                ChecklistItem("1", "Book flight tickets", false, "Travel Booking"),
-                ChecklistItem("2", "Reserve hotel rooms", false, "Accommodation"),
-                ChecklistItem("3", "Check visa requirements", false, "Documents"),
-                ChecklistItem("4", "Get travel insurance", false, "Insurance"),
-                ChecklistItem("5", "Renew passport if needed", false, "Documents"),
-                ChecklistItem("6", "Make photocopies of important documents", false, "Documents"),
-                ChecklistItem("7", "Pack clothes and essentials", false, "Packing"),
-                ChecklistItem("8", "Pack toiletries and medications", false, "Packing"),
-                ChecklistItem("9", "Notify bank about travel dates", false, "Finance"),
-                ChecklistItem("10", "Download offline maps", false, "Apps & Tech"),
-                ChecklistItem("11", "Install translation apps", false, "Apps & Tech"),
-                ChecklistItem("12", "Create emergency contacts list", false, "Safety"),
-                ChecklistItem("13", "Get vaccinations if required", false, "Health"),
-                ChecklistItem("14", "Book airport transfers", false, "Transportation"),
-                ChecklistItem("15", "Arrange pet/plant care", false, "Home"),
-                ChecklistItem("16", "Stop mail delivery", false, "Home"),
-                ChecklistItem("17", "Clean out fridge", false, "Home"),
-                ChecklistItem("18", "Pack chargers and adapters", false, "Electronics"),
-                ChecklistItem("19", "Download entertainment for flight", false, "Entertainment"),
-                ChecklistItem("20", "Check weather forecast", false, "Planning")
-            )
-        )
+fun TravelChecklistPanel(
+    tripId: String,
+    tripRepository: TripRepository
+) {
+    val scope = rememberCoroutineScope()
+    var items by remember { mutableStateOf(emptyList<ChecklistItem>()) }
+
+    // Load checklist items from database
+    LaunchedEffect(tripId) {
+        tripRepository.getTripChecklistItems(tripId).collect { loadedItems ->
+            items = loadedItems
+        }
     }
 
     var showAddDialog by remember { mutableStateOf(false) }
@@ -182,12 +170,17 @@ fun TravelChecklistPanel() {
                             category = category,
                             items = categoryItems,
                             onToggle = { id ->
-                                items = items.map {
-                                    if (it.id == id) it.copy(completed = !it.completed) else it
+                                scope.launch {
+                                    val item = items.find { it.id == id }
+                                    if (item != null) {
+                                        tripRepository.updateTripChecklistItem(tripId, item.copy(completed = !item.completed))
+                                    }
                                 }
                             },
                             onDelete = { id ->
-                                items = items.filter { it.id != id }
+                                scope.launch {
+                                    tripRepository.deleteTripChecklistItem(tripId, id)
+                                }
                             }
                         )
                     }
@@ -202,12 +195,14 @@ fun TravelChecklistPanel() {
                     ChecklistItemRow(
                         item = item,
                         onToggle = {
-                            items = items.map {
-                                if (it.id == item.id) it.copy(completed = !it.completed) else it
+                            scope.launch {
+                                tripRepository.updateTripChecklistItem(tripId, item.copy(completed = !item.completed))
                             }
                         },
                         onDelete = {
-                            items = items.filter { it.id != item.id }
+                            scope.launch {
+                                tripRepository.deleteTripChecklistItem(tripId, item.id)
+                            }
                         }
                     )
                 }
@@ -238,12 +233,15 @@ fun TravelChecklistPanel() {
         AddItemDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { text, category ->
-                items = items + ChecklistItem(
+                val newItem = ChecklistItem(
                     id = System.currentTimeMillis().toString(),
                     text = text,
                     completed = false,
                     category = category
                 )
+                scope.launch {
+                    tripRepository.addTripChecklistItem(tripId, newItem)
+                }
                 showAddDialog = false
             }
         )

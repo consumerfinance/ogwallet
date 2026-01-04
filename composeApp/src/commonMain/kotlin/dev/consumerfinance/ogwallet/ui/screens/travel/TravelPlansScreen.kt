@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.consumerfinance.ogwallet.db.DatabaseManager
+import dev.consumerfinance.ogwallet.db.TripRepository
 import dev.consumerfinance.ogwallet.models.travel.PlanningTab
 import dev.consumerfinance.ogwallet.models.travel.RoutePoint
 import dev.consumerfinance.ogwallet.models.travel.Trip
@@ -34,6 +36,7 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun TravelPlansScreen(
     trip: Trip,
+    tripRepository: TripRepository,
     onBackToSelect: () -> Unit
 ) {
     var routes by remember {
@@ -145,6 +148,8 @@ fun TravelPlansScreen(
             if (isPanelOpen) {
                 MobileBottomSheet(
                     activeTab = activeTab,
+                    tripId = trip.id,
+                    tripRepository = tripRepository,
                     onTabChange = { activeTab = it },
                     onDismiss = { isPanelOpen = false }
                 )
@@ -155,6 +160,8 @@ fun TravelPlansScreen(
                 modifier = Modifier.padding(paddingValues),
                 routes = routes,
                 activeTab = activeTab,
+                tripId = trip.id,
+                tripRepository = tripRepository,
                 editingId = editingId,
                 onTabChange = { activeTab = it },
                 onEditingIdChange = { editingId = it },
@@ -243,6 +250,8 @@ fun DesktopLayout(
     modifier: Modifier = Modifier,
     routes: List<RoutePoint>,
     activeTab: PlanningTab,
+    tripId: String,
+    tripRepository: TripRepository,
     editingId: String?,
     onTabChange: (PlanningTab) -> Unit,
     onEditingIdChange: (String?) -> Unit,
@@ -334,8 +343,8 @@ fun DesktopLayout(
                 // Content
                 Box(modifier = Modifier.weight(1f)) {
                     when (activeTab) {
-                        PlanningTab.CHECKLIST -> TravelChecklistPanel()
-                        PlanningTab.COSTS -> CostTrackerPanel()
+                        PlanningTab.CHECKLIST -> TravelChecklistPanel(tripId = tripId, tripRepository = tripRepository)
+                        PlanningTab.COSTS -> CostTrackerPanel(tripId = tripId, tripRepository = tripRepository)
                         PlanningTab.REWARDS -> CreditCardRewardsPanel()
                         PlanningTab.STOPOVERS -> StopoverHintsPanel()
                         PlanningTab.ACTIVITIES -> ActivitiesPanel()
@@ -350,6 +359,8 @@ fun DesktopLayout(
 @Composable
 fun MobileBottomSheet(
     activeTab: PlanningTab,
+    tripId: String,
+    tripRepository: TripRepository,
     onTabChange: (PlanningTab) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -447,8 +458,8 @@ fun MobileBottomSheet(
                     // Content
                     Box(modifier = Modifier.weight(1f)) {
                         when (activeTab) {
-                            PlanningTab.CHECKLIST -> TravelChecklistPanel()
-                            PlanningTab.COSTS -> CostTrackerPanel()
+                            PlanningTab.CHECKLIST -> TravelChecklistPanel(tripId = tripId, tripRepository = tripRepository)
+                            PlanningTab.COSTS -> CostTrackerPanel(tripId = tripId, tripRepository = tripRepository)
                             PlanningTab.REWARDS -> CreditCardRewardsPanel()
                             PlanningTab.STOPOVERS -> StopoverHintsPanel()
                             PlanningTab.ACTIVITIES -> ActivitiesPanel()

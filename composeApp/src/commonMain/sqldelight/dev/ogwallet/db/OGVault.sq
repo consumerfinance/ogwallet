@@ -205,6 +205,14 @@ WHERE id = 0;
 getMonthlyBudget:
 SELECT monthly_budget FROM vault_config WHERE id = 0;
 
+getBiometricEnabled:
+SELECT is_biometric_enabled FROM vault_config WHERE id = 0;
+
+updateBiometricEnabled:
+UPDATE vault_config
+SET is_biometric_enabled = ?
+WHERE id = 0;
+
 -- Credit Card Queries
 insertCard:
 INSERT INTO credit_card(id, name, nickname, card_number, last4, cvv, expiry, balance, credit_limit, available_credit, network, bank_name, next_payment, min_payment)
@@ -257,6 +265,26 @@ WHERE id = ?;
 getAllBills:
 SELECT * FROM credit_card_bill ORDER BY due_date DESC;
 
+-- Trip Cost Items
+CREATE TABLE IF NOT EXISTS trip_cost_item (
+    id TEXT PRIMARY KEY,
+    trip_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT NOT NULL,
+    amount REAL NOT NULL,
+    FOREIGN KEY (trip_id) REFERENCES trip(id) ON DELETE CASCADE
+);
+
+-- Trip Checklist Items
+CREATE TABLE IF NOT EXISTS trip_checklist_item (
+    id TEXT PRIMARY KEY,
+    trip_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    completed INTEGER AS Boolean DEFAULT 0,
+    category TEXT NOT NULL,
+    FOREIGN KEY (trip_id) REFERENCES trip(id) ON DELETE CASCADE
+);
+
 -- Trip Queries
 insertTrip:
 INSERT INTO trip(id, destination, dates, status, points_used, savings, emoji, bookings, created_at, updated_at)
@@ -275,3 +303,35 @@ WHERE id = ?;
 
 deleteTrip:
 DELETE FROM trip WHERE id = ?;
+
+-- Trip Cost Item Queries
+insertTripCostItem:
+INSERT INTO trip_cost_item(id, trip_id, category, description, amount)
+VALUES (?, ?, ?, ?, ?);
+
+getTripCostItems:
+SELECT * FROM trip_cost_item WHERE trip_id = ? ORDER BY id ASC;
+
+updateTripCostItem:
+UPDATE trip_cost_item
+SET category = ?, description = ?, amount = ?
+WHERE id = ? AND trip_id = ?;
+
+deleteTripCostItem:
+DELETE FROM trip_cost_item WHERE id = ? AND trip_id = ?;
+
+-- Trip Checklist Item Queries
+insertTripChecklistItem:
+INSERT INTO trip_checklist_item(id, trip_id, text, completed, category)
+VALUES (?, ?, ?, ?, ?);
+
+getTripChecklistItems:
+SELECT * FROM trip_checklist_item WHERE trip_id = ? ORDER BY id ASC;
+
+updateTripChecklistItem:
+UPDATE trip_checklist_item
+SET text = ?, completed = ?, category = ?
+WHERE id = ? AND trip_id = ?;
+
+deleteTripChecklistItem:
+DELETE FROM trip_checklist_item WHERE id = ? AND trip_id = ?;

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import dev.consumerfinance.ogwallet.db.TripRepository
 import dev.consumerfinance.ogwallet.getPlatform
 import dev.consumerfinance.ogwallet.models.travel.Trip
 import dev.consumerfinance.ogwallet.ui.screens.cc.CreditCardsScreen
@@ -24,11 +25,13 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import dev.consumerfinance.ogwallet.ui.screens.settings.SettingsScreen
 import dev.consumerfinance.ogwallet.ui.screens.travel.TravelPlansScreen
 import dev.consumerfinance.ogwallet.ui.screens.travel.TravelPlanSelectScreen
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun MainNavigationContainer() {
+    val tripRepository: TripRepository = koinInject()
     var selectedTab by remember { mutableStateOf(0) }
     var selectedTrip by remember { mutableStateOf<Trip?>(null) }
 
@@ -53,6 +56,7 @@ fun MainNavigationContainer() {
             selectedTab = selectedTab,
             selectedTrip = selectedTrip,
             navigationItems = navigationItems,
+            tripRepository = tripRepository,
             onTabSelected = { selectedTab = it },
             onTripSelected = { selectedTrip = it },
             onBackToSelect = { selectedTrip = null }
@@ -63,6 +67,7 @@ fun MainNavigationContainer() {
             selectedTab = selectedTab,
             selectedTrip = selectedTrip,
             navigationItems = navigationItems,
+            tripRepository = tripRepository,
             onTabSelected = { selectedTab = it },
             onTripSelected = { selectedTrip = it },
             onBackToSelect = { selectedTrip = null }
@@ -76,6 +81,7 @@ fun DesktopNavigationLayout(
     selectedTab: Int,
     selectedTrip: Trip?,
     navigationItems: List<NavigationItem>,
+    tripRepository: TripRepository,
     onTabSelected: (Int) -> Unit,
     onTripSelected: (Trip) -> Unit,
     onBackToSelect: () -> Unit
@@ -96,7 +102,7 @@ fun DesktopNavigationLayout(
                     if (selectedTrip == null) {
                         TravelPlanSelectScreen(onTripSelected = onTripSelected)
                     } else {
-                        TravelPlansScreen(trip = selectedTrip, onBackToSelect = onBackToSelect)
+                        TravelPlansScreen(trip = selectedTrip, tripRepository = tripRepository, onBackToSelect = onBackToSelect)
                     }
                 }
                 4 -> BudgetAnalyticsScreen()
@@ -246,6 +252,7 @@ fun MobileNavigationLayout(
     selectedTab: Int,
     selectedTrip: Trip?,
     navigationItems: List<NavigationItem>,
+    tripRepository: TripRepository,
     onTabSelected: (Int) -> Unit,
     onTripSelected: (Trip) -> Unit,
     onBackToSelect: () -> Unit
@@ -287,7 +294,7 @@ fun MobileNavigationLayout(
                             if (selectedTrip == null) {
                                 TravelPlanSelectScreen(onTripSelected = onTripSelected)
                             } else {
-                                TravelPlansScreen(trip = selectedTrip, onBackToSelect = onBackToSelect)
+                                TravelPlansScreen(trip = selectedTrip, tripRepository = tripRepository, onBackToSelect = onBackToSelect)
                             }
                         }
                         4 -> BudgetAnalyticsScreen()

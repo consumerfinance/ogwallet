@@ -15,25 +15,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.consumerfinance.ogwallet.db.TripRepository
 import dev.consumerfinance.ogwallet.models.travel.CostCategory
 import dev.consumerfinance.ogwallet.models.travel.CostItem
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CostTrackerPanel() {
-    var costs by remember {
-        mutableStateOf(
-            listOf(
-                CostItem("1", CostCategory.FLIGHT, "Delhi to Mumbai - IndiGo", 8500.0),
-                CostItem("2", CostCategory.FLIGHT, "Return flight - Air India", 9200.0),
-                CostItem("3", CostCategory.HOTEL, "Taj Hotel - 3 nights", 25000.0),
-                CostItem("4", CostCategory.HOTEL, "Airport hotel - 1 night", 4500.0),
-                CostItem("5", CostCategory.RAILWAY, "Local metro passes", 800.0),
-                CostItem("6", CostCategory.RAILWAY, "Mumbai to Pune train", 1200.0),
-                CostItem("7", CostCategory.OTHER, "Travel insurance", 2500.0),
-                CostItem("8", CostCategory.OTHER, "Restaurant budget", 5000.0)
-            )
-        )
+fun CostTrackerPanel(
+    tripId: String,
+    tripRepository: TripRepository
+) {
+    val scope = rememberCoroutineScope()
+    var costs by remember { mutableStateOf(emptyList<CostItem>()) }
+
+    // Load costs from database
+    LaunchedEffect(tripId) {
+        tripRepository.getTripCostItems(tripId).collect { loadedCosts ->
+            costs = loadedCosts
+        }
     }
 
     var showAddDialog by remember { mutableStateOf(false) }
@@ -189,7 +189,11 @@ fun CostTrackerPanel() {
             items(filteredCosts) { cost ->
                 CostItemRow(
                     cost = cost,
-                    onDelete = { costs = costs.filter { it.id != cost.id } }
+                    onDelete = {
+                        scope.launch {
+                            tripRepository.deleteTripCostItem(tripId, cost.id)
+                        }
+                    }
                 )
             }
         }
@@ -218,12 +222,15 @@ fun CostTrackerPanel() {
         AddCostDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { category, description, amount ->
-                costs = costs + CostItem(
+                val newCostItem = CostItem(
                     id = System.currentTimeMillis().toString(),
                     category = category,
                     description = description,
                     amount = amount
                 )
+                scope.launch {
+                    tripRepository.addTripCostItem(tripId, newCostItem)
+                }
                 showAddDialog = false
             }
         )

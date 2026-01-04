@@ -82,6 +82,14 @@ actual class BiometricAuth {
     actual fun isOnboardingComplete(): Boolean {
         return window.localStorage.getItem("ogwallet_onboarding_complete") == "true"
     }
+
+    actual fun isBiometricEnabled(): Boolean {
+        return window.localStorage.getItem("ogwallet_biometric_enabled") == "true"
+    }
+
+    actual fun setBiometricEnabled(enabled: Boolean) {
+        window.localStorage.setItem("ogwallet_biometric_enabled", enabled.toString())
+    }
     
     // Storage helper methods using localStorage
     

@@ -26,6 +26,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.launch // New import
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.ui.text.input.VisualTransformation // New import
 import androidx.compose.ui.text.input.PasswordVisualTransformation // New import
 import androidx.compose.foundation.text.KeyboardOptions // New import
@@ -58,6 +59,7 @@ fun SettingsScreen() {
     val currentCurrency by dbManager.getCurrencyCode().collectAsState(initial = "INR")
     val currentTheme by dbManager.getThemeMode().collectAsState(initial = ThemeMode.SYSTEM)
     val currentAutoLockTimeout by dbManager.getAutoLockTimeout().collectAsState(initial = 60L)
+    var isBiometricEnabled by remember { mutableStateOf(biometricAuth.isBiometricEnabled()) }
 
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json") // MIME type for JSON
@@ -104,6 +106,10 @@ fun SettingsScreen() {
         SettingsScreenRoute.MAIN_SETTINGS -> {
             SettingsScreenContent(
                 isAndroid = isAndroid,
+                scope = scope,
+                biometricAuth = biometricAuth,
+                isBiometricEnabled = isBiometricEnabled,
+                setBiometricEnabled = { isBiometricEnabled = it },
                 onOpenSmsScanner = { currentRoute = SettingsScreenRoute.SMS_SCANNER },
                 onOpenMboxImport = { currentRoute = SettingsScreenRoute.MBOX_IMPORT },
                 onExportDataClicked = { showExportDataDialog = true },
@@ -209,6 +215,10 @@ fun SettingsScreen() {
 @Composable
 private fun SettingsScreenContent(
     isAndroid: Boolean,
+    scope: CoroutineScope,
+    biometricAuth: BiometricAuth,
+    isBiometricEnabled: Boolean,
+    setBiometricEnabled: (Boolean) -> Unit,
     onOpenSmsScanner: () -> Unit,
     onOpenMboxImport: () -> Unit,
     onExportDataClicked: () -> Unit,
@@ -283,8 +293,29 @@ private fun SettingsScreenContent(
                 SettingsItem(
                     icon = Icons.Default.Fingerprint,
                     title = "Biometric Authentication",
-                    subtitle = "Use fingerprint or face unlock",
-                    onClick = { /* TODO */ }
+                    subtitle = if (isBiometricEnabled) "Enabled - tap to disable" else "Disabled - tap to enable",
+                    onClick = {
+                        if (isAndroid) {
+                            if (!isBiometricEnabled) {
+                                // Try to enable biometric - prompt for authentication
+                                scope.launch {
+                                    val result = biometricAuth.authenticate()
+                                    if (result.isSuccess) {
+                                        biometricAuth.setBiometricEnabled(true)
+                                        // Update state
+                                        setBiometricEnabled(true)
+                                    } else {
+                                        // Show error or do nothing
+                                        println("Biometric setup failed: ${result.exceptionOrNull()?.message}")
+                                    }
+                                }
+                            } else {
+                                // Disable biometric
+                                biometricAuth.setBiometricEnabled(false)
+                                setBiometricEnabled(false)
+                            }
+                        }
+                    }
                 )
                 
                 SettingsItem(

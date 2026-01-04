@@ -22,6 +22,7 @@ actual class BiometricAuth {
     private val pinFile = File(configDir, ".pin")
     private val passphraseFile = File(configDir, ".passphrase")
     private val onboardingFile = File(configDir, ".onboarding_complete")
+    private val biometricEnabledFile = File(configDir, ".biometric_enabled")
 
     actual suspend fun authenticate(): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -184,6 +185,26 @@ actual class BiometricAuth {
             onboardingFile.exists() && onboardingFile.readText() == "true"
         } catch (e: Exception) {
             false
+        }
+    }
+
+    actual fun isBiometricEnabled(): Boolean {
+        return try {
+            biometricEnabledFile.exists() && biometricEnabledFile.readText() == "true"
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    actual fun setBiometricEnabled(enabled: Boolean) {
+        try {
+            if (!configDir.exists()) {
+                configDir.mkdirs()
+            }
+            biometricEnabledFile.writeText(enabled.toString())
+        } catch (e: Exception) {
+            // Log error but don't throw
+            println("Failed to set biometric enabled status: ${e.message}")
         }
     }
 }

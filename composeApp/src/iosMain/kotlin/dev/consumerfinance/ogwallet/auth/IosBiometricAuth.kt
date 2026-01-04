@@ -94,4 +94,13 @@ actual class BiometricAuth {
     actual fun isOnboardingComplete(): Boolean {
         return userDefaults.boolForKey(KEY_ONBOARDING_COMPLETE)
     }
+
+    actual fun isBiometricEnabled(): Boolean {
+        return userDefaults.boolForKey("biometric_enabled")
+    }
+
+    actual fun setBiometricEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "biometric_enabled")
+        userDefaults.synchronize()
+    }
 }
