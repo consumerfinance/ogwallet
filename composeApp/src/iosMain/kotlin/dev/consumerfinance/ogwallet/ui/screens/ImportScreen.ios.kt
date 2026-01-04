@@ -1,13 +1,11 @@
-package dev.consumerfinance.ogwallet.ui.screens
+package dev.consumerfinance.ogwallet.ui.screens.settings
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 /**
- * iOS implementation - SMS scanning not available on iOS
+ * iOS implementation of SMS scanner wrapper - not supported
  */
 @Composable
 actual fun SmsScannerScreenWrapper(onBack: () -> Unit) {
-    Text("SMS scanning is not available on iOS")
+    // Not supported on iOS
 }
-

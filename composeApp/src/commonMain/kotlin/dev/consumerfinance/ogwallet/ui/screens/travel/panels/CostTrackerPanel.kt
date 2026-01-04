@@ -171,7 +171,7 @@ fun CostTrackerPanel() {
 
         // Expenses list
         Text(
-            text = if (selectedCategory == null) "All Expenses" else "${selectedCategory!!.displayName} Expenses",
+            text = if (selectedCategory == null) "All Expenses" else "${selectedCategory!!.categoryDisplayName} Expenses",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -252,7 +252,7 @@ fun CategoryChip(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = category.icon,
+                imageVector = category.categoryIcon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = if (isSelected) MaterialTheme.colorScheme.primary
@@ -260,7 +260,7 @@ fun CategoryChip(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = category.displayName,
+                text = category.categoryDisplayName,
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
                 else MaterialTheme.colorScheme.onSurfaceVariant
@@ -297,7 +297,7 @@ fun CostItemRow(
         ) {
             // Category icon
             Icon(
-                imageVector = cost.category.icon,
+                imageVector = cost.category.categoryIcon,
                 contentDescription = null,
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -311,7 +311,7 @@ fun CostItemRow(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = cost.category.displayName,
+                    text = cost.category.categoryDisplayName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -372,7 +372,7 @@ fun AddCostDialog(
                     onExpandedChange = { expanded = it }
                 ) {
                     OutlinedTextField(
-                        value = selectedCategory.displayName,
+                        value = selectedCategory.categoryDisplayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Category") },
@@ -394,11 +394,11 @@ fun AddCostDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = category.icon,
+                                            imageVector = category.categoryIcon,
                                             contentDescription = null,
                                             modifier = Modifier.size(20.dp)
                                         )
-                                        Text(category.displayName)
+                                        Text(category.categoryDisplayName)
                                     }
                                 },
                                 onClick = {

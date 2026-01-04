@@ -41,6 +41,7 @@ fun CreditCardsScreen() {
 
     var showCardNumbers by remember { mutableStateOf(mutableMapOf<String, Boolean>()) }
     var showAddCardDialog by remember { mutableStateOf(false) }
+    var showEditNicknameDialog by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     // Group transactions by card handle and calculate balances
@@ -127,8 +128,8 @@ fun CreditCardsScreen() {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = null)
+                    IconButton(onClick = { showAddCardDialog = true }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add Card")
                     }
                 }
             }
@@ -279,43 +280,6 @@ fun CreditCardsScreen() {
                                 textAlign = TextAlign.Center
                             )
                         }
-                        
-                        @Composable
-                        fun EditNicknameDialog(
-                            currentNickname: String?,
-                            onDismiss: () -> Unit,
-                            onSave: (String) -> Unit
-                        ) {
-                            var nickname by remember { mutableStateOf(currentNickname ?: "") }
-                        
-                            AlertDialog(
-                                onDismissRequest = onDismiss,
-                                title = { Text("Edit Nickname") },
-                                text = {
-                                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                        OutlinedTextField(
-                                            value = nickname,
-                                            onValueChange = { nickname = it },
-                                            label = { Text("Nickname (optional)") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            placeholder = { Text("Enter a nickname for this card") }
-                                        )
-                                    }
-                                },
-                                confirmButton = {
-                                    Button(
-                                        onClick = { onSave(nickname) }
-                                    ) {
-                                        Text("Save")
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = onDismiss) {
-                                        Text("Cancel")
-                                    }
-                                }
-                            )
-                        }
                     }
                 }
             }
@@ -335,6 +299,43 @@ fun CreditCardsScreen() {
             }
         }
     }
+}
+
+@Composable
+fun EditNicknameDialog(
+    currentNickname: String?,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var nickname by remember { mutableStateOf(currentNickname ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Nickname") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = nickname,
+                    onValueChange = { nickname = it },
+                    label = { Text("Nickname (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Enter a nickname for this card") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(nickname) }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

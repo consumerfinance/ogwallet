@@ -19,6 +19,7 @@ import dev.consumerfinance.ogwallet.models.travel.Trip
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +197,7 @@ fun TripCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AddTripDialog(
     onDismiss: () -> Unit,
@@ -235,7 +236,7 @@ fun AddTripDialog(
                 onClick = {
                     if (destination.isNotBlank() && dates.isNotBlank()) {
                         val newTrip = Trip(
-                            id = Clock.System.currentTimeMillis().toString(),
+                            id = Clock.System.now().toEpochMilliseconds().toString(),
                             destination = destination,
                             dates = dates,
                             status = "Draft",

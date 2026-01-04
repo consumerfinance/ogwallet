@@ -3,9 +3,9 @@ package dev.consumerfinance.ogwallet.ui.screens.settings
 import androidx.compose.runtime.Composable
 
 /**
- * JVM implementation of SMS scanner wrapper - not supported
+ * Android implementation of SMS scanner wrapper
  */
 @Composable
 actual fun SmsScannerScreenWrapper(onBack: () -> Unit) {
-    // Not supported on JVM
+    // TODO: Implement Android SMS scanner
 }

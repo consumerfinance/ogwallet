@@ -28,8 +28,9 @@ import dev.consumerfinance.ogwallet.ui.screens.travel.panels.TravelChecklistPane
 import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun TravelPlansScreen(
     trip: Trip,
@@ -53,11 +54,12 @@ fun TravelPlansScreen(
 
     val onMapClick: (Position, DpOffset) -> ClickResult = { position, dpOffset ->
         val newPoint = RoutePoint(
-            id = Clock.System.currentTimeMillis().toString(),
+            id = Clock.System.now().toEpochMilliseconds().toString(),
             position = position,
             label = "Point ${routes.size + 1}"
         )
         routes = routes + newPoint
+        ClickResult.Pass
     }
 
     val removeRoute: (String) -> Unit = { id ->
@@ -172,7 +174,7 @@ fun MobileLayout(
     editingId: String?,
     onShowWaypointsChange: (Boolean) -> Unit,
     onEditingIdChange: (String?) -> Unit,
-    onMapClick: (Position) -> Unit,
+    onMapClick: (Position, DpOffset) -> ClickResult,
     onRemoveRoute: (String) -> Unit,
     onUpdateRouteLabel: (String, String) -> Unit,
     onOpenPanel: () -> Unit
@@ -244,7 +246,7 @@ fun DesktopLayout(
     editingId: String?,
     onTabChange: (PlanningTab) -> Unit,
     onEditingIdChange: (String?) -> Unit,
-    onMapClick: (Position) -> Unit,
+    onMapClick: (Position, DpOffset) -> ClickResult,
     onRemoveRoute: (String) -> Unit,
     onUpdateRouteLabel: (String, String) -> Unit
 ) {

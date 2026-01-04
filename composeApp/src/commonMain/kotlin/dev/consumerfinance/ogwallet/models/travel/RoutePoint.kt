@@ -13,33 +13,3 @@ data class RoutePoint(
         label = label
     )
 }
-
-enum class PlanningTab {
-    CHECKLIST,
-    COSTS,
-    REWARDS,
-    STOPOVERS,
-    ACTIVITIES
-}
-
-data class ChecklistItem(
-    val id: String,
-    val text: String,
-    val completed: Boolean = false,
-    val category: String
-)
-
-data class CostItem(
-    val id: String,
-    val category: CostCategory,
-    val description: String,
-    val amount: Double,
-    val currency: String = "INR"
-)
-
-enum class CostCategory {
-    FLIGHT,
-    HOTEL,
-    RAILWAY,
-    OTHER
-}

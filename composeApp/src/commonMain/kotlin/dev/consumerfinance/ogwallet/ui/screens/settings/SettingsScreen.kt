@@ -33,8 +33,6 @@ import androidx.compose.ui.text.input.KeyboardType // New import
 
 import androidx.activity.compose.BackHandler // Import BackHandler
 import dev.consumerfinance.ogwallet.db.DatabaseManager // Moved import
-import android.content.Context
-import android.content.Intent
 import dev.consumerfinance.ogwallet.ui.screens.settings.SettingsScreenRoute
 
 @Composable
@@ -106,7 +104,6 @@ fun SettingsScreen() {
         SettingsScreenRoute.MAIN_SETTINGS -> {
             SettingsScreenContent(
                 isAndroid = isAndroid,
-                context = context,
                 onOpenSmsScanner = { currentRoute = SettingsScreenRoute.SMS_SCANNER },
                 onOpenMboxImport = { currentRoute = SettingsScreenRoute.MBOX_IMPORT },
                 onExportDataClicked = { showExportDataDialog = true },
@@ -212,7 +209,6 @@ fun SettingsScreen() {
 @Composable
 private fun SettingsScreenContent(
     isAndroid: Boolean,
-    context: Context,
     onOpenSmsScanner: () -> Unit,
     onOpenMboxImport: () -> Unit,
     onExportDataClicked: () -> Unit,
@@ -315,10 +311,10 @@ private fun SettingsScreenContent(
                     title = "Notifications",
                     subtitle = "Manage notification preferences",
                     onClick = {
-                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        // TODO: Open notification settings - Android specific
+                        if (isAndroid) {
+                            // Android-specific code would go here
                         }
-                        context.startActivity(intent)
                     }
                 )
                 

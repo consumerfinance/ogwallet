@@ -1,12 +1,19 @@
 package dev.consumerfinance.ogwallet.ui.screens.travel
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import dev.consumerfinance.ogwallet.models.travel.RoutePoint
+import ogwallet.composeapp.generated.resources.Res
+import ogwallet.composeapp.generated.resources.pointer
+import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MaplibreMap
@@ -33,24 +40,9 @@ fun MapView(
         cameraState = cameraPositionState,
         onMapClick = onMapClick,
     ) {
-        // Draw markers
-        routes.forEach { route ->
-            Marker(
-                state = MarkerState(position = route.position),
-                title = route.label,
-                snippet = "${route.position.latitude.format(4)}, ${route.position.longitude.format(4)}"
-            )
-        }
-
-        // Draw polyline connecting waypoints
-        if (routes.size > 1) {
-            Polyline(
-                points = routes.map { it.position },
-                color = Color(0xFF3B82F6),
-                width = 10f
-            )
-        }
+        // TODO: Add markers and polylines when available in maplibre-compose
+        // Currently placing regular Compose elements inside MaplibreMap causes ClassCastException
+        // as the library expects MapNode children, not LayoutNode
     }
 }
 
-private fun Double.format(digits: Int) = "%.${digits}f".format(this)
