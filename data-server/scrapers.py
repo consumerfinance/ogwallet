@@ -794,6 +794,8 @@ class ScraperManager:
         for bank_code, scraper in self.scrapers.items():
             try:
                 data = scraper.scrape_all()
+                if data is None:
+                    data = {'offers': [], 'benefits': [], 'pdfs': []}
                 # Add travel hacks if the scraper has the method
                 if hasattr(scraper, 'scrape_travel_hacks'):
                     data['travel_hacks'] = scraper.scrape_travel_hacks()
@@ -805,4 +807,5 @@ class ScraperManager:
             except Exception as e:
                 logger.error(f"Error scraping {bank_code}: {e}")
                 results[bank_code] = {'error': str(e)}
+        return results
 

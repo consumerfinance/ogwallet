@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Script to run web scraping and save data to disk
@@ -132,6 +133,8 @@ def main():
                 return obj.isoformat()
             if hasattr(obj, 'model_dump'):  # Pydantic model
                 return obj.model_dump()
+            if hasattr(obj, 'dict'):  # Pydantic v1
+                return obj.dict()
             raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
         json.dump(results, f, indent=2, ensure_ascii=False, default=json_serializer)
@@ -155,7 +158,7 @@ def main():
 
     app_file = 'app_data.json'
     with open(app_file, 'w', encoding='utf-8') as f:
-        json.dump(app_data, f, indent=2, ensure_ascii=False)
+        json.dump(app_data, f, indent=2, ensure_ascii=False, default=json_serializer)
 
     print(f"📱 App-ready data saved to {app_file}")
     print("✅ Scraping completed successfully!")

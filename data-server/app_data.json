@@ -1,9 +1,9 @@
 {
   "offers": [
     {
-      "id": "sample-chase-sapphire",
+      "id": "chase-sapphire-preferred",
       "title": "Chase Sapphire Preferred: 3x on Travel",
-      "description": "Earn 3x points on travel booked directly or through Chase Travel",
+      "description": "Earn 3x points on travel booked directly or through Chase Travel. 3x on restaurants worldwide and U.S. supermarkets",
       "card_name": "Chase Sapphire Preferred",
       "bank_name": "Chase",
       "category": "travel",

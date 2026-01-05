@@ -1,10 +1,25 @@
 {
+  "hdfc": {
+    "offers": [],
+    "benefits": [],
+    "pdfs": []
+  },
+  "icici": {
+    "offers": [],
+    "benefits": [],
+    "pdfs": []
+  },
+  "sbi": {
+    "offers": [],
+    "benefits": [],
+    "pdfs": []
+  },
   "rewards": {
     "offers": [
       {
-        "id": "sample-chase-sapphire",
+        "id": "chase-sapphire-preferred",
         "title": "Chase Sapphire Preferred: 3x on Travel",
-        "description": "Earn 3x points on travel booked directly or through Chase Travel",
+        "description": "Earn 3x points on travel booked directly or through Chase Travel. 3x on restaurants worldwide and U.S. supermarkets",
         "card_name": "Chase Sapphire Preferred",
         "bank_name": "Chase",
         "category": "travel",
@@ -18,16 +33,39 @@
         "is_active": true,
         "min_spend": null,
         "max_benefit": null,
-        "created_at": "2026-01-04T22:26:06.231994",
-        "updated_at": "2026-01-04T22:26:06.231999",
-        "source": "sample",
+        "created_at": "2026-01-05T13:38:10.715408",
+        "updated_at": "2026-01-05T13:38:10.715418",
+        "source": "chase",
         "upvotes": 0,
         "downvotes": 0
       },
       {
-        "id": "sample-amex-platinum",
-        "title": "Amex Platinum: 5x on Flights",
-        "description": "Earn 5x points on flights booked directly with airlines",
+        "id": "chase-sapphire-reserve",
+        "title": "Chase Sapphire Reserve: 3x on Travel & Dining",
+        "description": "Earn 3x points on travel and dining. Includes $550 annual dining credit and $300 travel credit",
+        "card_name": "Chase Sapphire Reserve",
+        "bank_name": "Chase",
+        "category": "travel",
+        "expiry_date": null,
+        "terms": null,
+        "emoji": "💳",
+        "gradient_colors": [
+          "#3b82f6",
+          "#06b6d4"
+        ],
+        "is_active": true,
+        "min_spend": null,
+        "max_benefit": null,
+        "created_at": "2026-01-05T13:38:10.715458",
+        "updated_at": "2026-01-05T13:38:10.715459",
+        "source": "chase",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "amex-platinum",
+        "title": "Amex Platinum: 5x on Flights & Hotels",
+        "description": "Earn 5x points on flights booked directly with airlines and hotels through amextravel.com",
         "card_name": "American Express Platinum",
         "bank_name": "American Express",
         "category": "travel",
@@ -41,9 +79,101 @@
         "is_active": true,
         "min_spend": null,
         "max_benefit": null,
-        "created_at": "2026-01-04T22:26:06.232009",
-        "updated_at": "2026-01-04T22:26:06.232009",
-        "source": "sample",
+        "created_at": "2026-01-05T13:38:10.715475",
+        "updated_at": "2026-01-05T13:38:10.715475",
+        "source": "amex",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "amex-gold",
+        "title": "Amex Gold: 4x on Restaurants & U.S. Supermarkets",
+        "description": "Earn 4x points at restaurants worldwide and U.S. supermarkets",
+        "card_name": "American Express Gold",
+        "bank_name": "American Express",
+        "category": "dining",
+        "expiry_date": null,
+        "terms": null,
+        "emoji": "💳",
+        "gradient_colors": [
+          "#3b82f6",
+          "#06b6d4"
+        ],
+        "is_active": true,
+        "min_spend": null,
+        "max_benefit": null,
+        "created_at": "2026-01-05T13:38:10.715481",
+        "updated_at": "2026-01-05T13:38:10.715481",
+        "source": "amex",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "capital-one-venture",
+        "title": "Capital One Venture: 2x on All Purchases",
+        "description": "Earn 2x miles on all purchases with no foreign transaction fees",
+        "card_name": "Capital One Venture Rewards",
+        "bank_name": "Capital One",
+        "category": "travel",
+        "expiry_date": null,
+        "terms": null,
+        "emoji": "💳",
+        "gradient_colors": [
+          "#3b82f6",
+          "#06b6d4"
+        ],
+        "is_active": true,
+        "min_spend": null,
+        "max_benefit": null,
+        "created_at": "2026-01-05T13:38:10.715485",
+        "updated_at": "2026-01-05T13:38:10.715485",
+        "source": "capital-one",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "citi-aadvantage",
+        "title": "Citi AAdvantage: 3x on American Airlines",
+        "description": "Earn 3x miles on American Airlines purchases and flights",
+        "card_name": "Citi AAdvantage Platinum Select",
+        "bank_name": "Citibank",
+        "category": "travel",
+        "expiry_date": null,
+        "terms": null,
+        "emoji": "💳",
+        "gradient_colors": [
+          "#3b82f6",
+          "#06b6d4"
+        ],
+        "is_active": true,
+        "min_spend": null,
+        "max_benefit": null,
+        "created_at": "2026-01-05T13:38:10.715488",
+        "updated_at": "2026-01-05T13:38:10.715488",
+        "source": "citi",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "discover-it-cashback",
+        "title": "Discover it Cash Back: 5% Rotating Categories",
+        "description": "Earn 5% cash back in rotating categories each quarter, up to the quarterly maximum",
+        "card_name": "Discover it Cash Back",
+        "bank_name": "Discover",
+        "category": "other",
+        "expiry_date": null,
+        "terms": null,
+        "emoji": "💳",
+        "gradient_colors": [
+          "#3b82f6",
+          "#06b6d4"
+        ],
+        "is_active": true,
+        "min_spend": null,
+        "max_benefit": null,
+        "created_at": "2026-01-05T13:38:10.715492",
+        "updated_at": "2026-01-05T13:38:10.715493",
+        "source": "discover",
         "upvotes": 0,
         "downvotes": 0
       }
@@ -57,61 +187,297 @@
     "pdfs": [],
     "travel_hacks": [
       {
-        "id": "sample-stopover-icelandair",
-        "title": "Free Stopover in Iceland",
-        "description": "Get a free stopover in Reykjavik when flying Icelandair transatlantic routes",
+        "id": "stopover-icelandair",
+        "title": "Icelandair Free Stopover",
+        "description": "Free stopover in Reykjavik (up to 7 nights) on transatlantic flights from North America to Europe",
         "category": "stopover",
-        "source": "secretflying",
-        "url": "https://www.secretflying.com/icelandair-stopover/",
+        "source": "icelandair",
+        "url": "https://www.icelandair.com/en/information/stopover-in-iceland/",
         "tags": [
           "icelandair",
           "stopover",
-          "free"
+          "free",
+          "reykjavik"
         ],
         "difficulty": "easy",
         "savings_potential": "$500+",
         "emoji": "🗻",
-        "created_at": "2026-01-04T22:26:06.232016",
-        "updated_at": "2026-01-04T22:26:06.232017",
+        "created_at": "2026-01-05T13:38:11.720614",
+        "updated_at": "2026-01-05T13:38:11.720625",
         "upvotes": 0,
         "downvotes": 0
       },
       {
-        "id": "sample-error-fare",
+        "id": "stopover-emirates",
+        "title": "Emirates Stopover Deals",
+        "description": "Stopover in Dubai for up to 96 hours on flights to/from certain destinations",
+        "category": "stopover",
+        "source": "emirates",
+        "url": "https://www.emirates.com/in/english/experience/stopover/",
+        "tags": [
+          "emirates",
+          "stopover",
+          "dubai"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$300+",
+        "emoji": "🏝️",
+        "created_at": "2026-01-05T13:38:11.720642",
+        "updated_at": "2026-01-05T13:38:11.720642",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "stopover-singapore-airlines",
+        "title": "Singapore Airlines Stopover",
+        "description": "Free stopover in Singapore on flights between certain destinations",
+        "category": "stopover",
+        "source": "singapore-airlines",
+        "url": "https://www.singaporeair.com/en_UK/in/travel-info/special-assistance/stopover/",
+        "tags": [
+          "singapore-airlines",
+          "stopover",
+          "singapore"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$400+",
+        "emoji": "🇸🇬",
+        "created_at": "2026-01-05T13:38:11.720647",
+        "updated_at": "2026-01-05T13:38:11.720647",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "stopover-qatar-airways",
+        "title": "Qatar Airways Stopover",
+        "description": "Free stopover in Doha on flights connecting through Hamad International Airport",
+        "category": "stopover",
+        "source": "qatar-airways",
+        "url": "https://www.qatarairways.com/en/baggage/special-baggage/stopover.html",
+        "tags": [
+          "qatar-airways",
+          "stopover",
+          "doha"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$350+",
+        "emoji": "🇶🇦",
+        "created_at": "2026-01-05T13:38:11.720650",
+        "updated_at": "2026-01-05T13:38:11.720650",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "hack-error-fare",
         "title": "Book Error Fares",
-        "description": "Find and book airline error fares for huge savings",
+        "description": "Find and book airline error fares for huge savings on flight tickets",
         "category": "error_fare",
         "source": "secretflying",
         "url": "https://www.secretflying.com/error-fares/",
         "tags": [
           "error fare",
-          "cheap flights"
+          "cheap flights",
+          "booking"
         ],
         "difficulty": "medium",
         "savings_potential": "Up to 90% off",
         "emoji": "💸",
-        "created_at": "2026-01-04T22:26:06.232021",
-        "updated_at": "2026-01-04T22:26:06.232021",
+        "created_at": "2026-01-05T13:38:11.720657",
+        "updated_at": "2026-01-05T13:38:11.720658",
         "upvotes": 0,
         "downvotes": 0
       },
       {
-        "id": "sample-credit-card-points",
+        "id": "hack-credit-card-points",
         "title": "Maximize Credit Card Points",
-        "description": "Use the right credit card for each purchase category to maximize rewards",
+        "description": "Use the right credit card for each purchase category to maximize rewards and points",
         "category": "credit_card",
         "source": "thepointsguy",
         "url": "https://thepointsguy.com/guide/credit-cards/",
         "tags": [
           "credit cards",
           "points",
-          "rewards"
+          "rewards",
+          "saving"
         ],
         "difficulty": "easy",
         "savings_potential": "$100-500/year",
         "emoji": "💳",
-        "created_at": "2026-01-04T22:26:06.232024",
-        "updated_at": "2026-01-04T22:26:06.232024",
+        "created_at": "2026-01-05T13:38:11.720661",
+        "updated_at": "2026-01-05T13:38:11.720661",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "hack-mixed-cabin",
+        "title": "Book Mixed Cabin Tickets",
+        "description": "Book separate tickets in different cabins to save money on premium economy or business",
+        "category": "booking_hack",
+        "source": "secretflying",
+        "url": "https://www.secretflying.com/mixed-cabin/",
+        "tags": [
+          "mixed cabin",
+          "business class",
+          "saving"
+        ],
+        "difficulty": "medium",
+        "savings_potential": "$1000+",
+        "emoji": "✈️",
+        "created_at": "2026-01-05T13:38:11.720664",
+        "updated_at": "2026-01-05T13:38:11.720665",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "hack-city-pass",
+        "title": "Use City Tourist Passes",
+        "description": "Purchase city tourist passes that include transportation and attractions for big savings",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/TravelGuide",
+        "tags": [
+          "city pass",
+          "attractions",
+          "transportation"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$50-200",
+        "emoji": "🎫",
+        "created_at": "2026-01-05T13:38:11.720667",
+        "updated_at": "2026-01-05T13:38:11.720668",
+        "upvotes": 0,
+        "downvotes": 0
+      }
+    ]
+  },
+  "activities": {
+    "offers": [],
+    "benefits": [],
+    "pdfs": [],
+    "activities": [
+      {
+        "id": "activity-machu-picchu",
+        "title": "Machu Picchu Day Tour",
+        "description": "Explore the ancient Incan citadel with a guided tour including transportation from Cusco",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/AttractionProductReview-g294318-d1145277-Machu_Picchu_Day_Tour_from_Cusco-Cusco_Cusco_Region.html",
+        "tags": [
+          "machu picchu",
+          "peru",
+          "guided tour",
+          "historical"
+        ],
+        "difficulty": "medium",
+        "savings_potential": "$50-100",
+        "emoji": "🏔️",
+        "created_at": "2026-01-05T13:38:12.725968",
+        "updated_at": "2026-01-05T13:38:12.726018",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "activity-taj-mahal",
+        "title": "Taj Mahal Sunrise Tour",
+        "description": "Experience the Taj Mahal at sunrise with skip-the-line access and private guide",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/Attractions-g304551-Activities-Agra_Uttar_Pradesh.html",
+        "tags": [
+          "taj mahal",
+          "india",
+          "sunrise",
+          "monument"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$30-60",
+        "emoji": "🕌",
+        "created_at": "2026-01-05T13:38:12.726096",
+        "updated_at": "2026-01-05T13:38:12.726101",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "activity-grand-canyon",
+        "title": "Grand Canyon Helicopter Tour",
+        "description": "Aerial tour of the Grand Canyon with breathtaking views and photo opportunities",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/Attractions-g143028-Activities-Grand_Canyon_National_Park_Arizona.html",
+        "tags": [
+          "grand canyon",
+          "helicopter",
+          "usa",
+          "nature"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$100-200",
+        "emoji": "🏜️",
+        "created_at": "2026-01-05T13:38:12.726120",
+        "updated_at": "2026-01-05T13:38:12.726123",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "activity-venice-gondola",
+        "title": "Venice Gondola Ride",
+        "description": "Traditional gondola ride through the canals of Venice with live music",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/Attractions-g187870-Activities-Venice_Veneto.html",
+        "tags": [
+          "venice",
+          "gondola",
+          "italy",
+          "romantic"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$40-80",
+        "emoji": "🚣",
+        "created_at": "2026-01-05T13:38:12.726139",
+        "updated_at": "2026-01-05T13:38:12.726142",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "activity-niagara-falls",
+        "title": "Niagara Falls Boat Tour",
+        "description": "Maid of the Mist boat tour getting you close to the thundering waterfalls",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/Attractions-g154998-Activities-Niagara_Falls_Ontario.html",
+        "tags": [
+          "niagara falls",
+          "boat tour",
+          "canada",
+          "waterfall"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$30-60",
+        "emoji": "💧",
+        "created_at": "2026-01-05T13:38:12.726156",
+        "updated_at": "2026-01-05T13:38:12.726176",
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      {
+        "id": "activity-santorini-sunset",
+        "title": "Santorini Sunset Cruise",
+        "description": "Catamaran cruise watching the famous Santorini sunset with dinner and drinks",
+        "category": "activity",
+        "source": "tripadvisor",
+        "url": "https://www.tripadvisor.com/Attractions-g189400-Activities-Santorini_Cyclades_South_Aegean.html",
+        "tags": [
+          "santorini",
+          "sunset",
+          "greece",
+          "cruise"
+        ],
+        "difficulty": "easy",
+        "savings_potential": "$80-150",
+        "emoji": "🌅",
+        "created_at": "2026-01-05T13:38:12.726250",
+        "updated_at": "2026-01-05T13:38:12.726254",
         "upvotes": 0,
         "downvotes": 0
       }
