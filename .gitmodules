@@ -1,0 +1,3 @@
+[submodule "data-server"]
+	path = data-server
+	url = https://github.com/consumerfinance/data-server
