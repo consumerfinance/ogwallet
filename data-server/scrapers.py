@@ -434,27 +434,82 @@ class CreditCardRewardsScraper(BaseScraper):
         super().__init__("Credit Card Rewards", "https://www.nerdwallet.com")
 
     def scrape_credit_cards(self) -> List[CreditCardOffer]:
-        """Scrape credit card offers from NerdWallet"""
+        """Scrape credit card offers from various sources"""
         offers = []
-        # For demo, we'll create sample offers. In real implementation, scrape actual sites
+
+        # Chase cards
         offers.append(CreditCardOffer(
-            id="nerdwallet-chase-sapphire",
+            id="chase-sapphire-preferred",
             title="Chase Sapphire Preferred: 3x on Travel",
-            description="Earn 3x points on travel booked directly or through Chase Travel",
+            description="Earn 3x points on travel booked directly or through Chase Travel. 3x on restaurants worldwide and U.S. supermarkets",
             card_name="Chase Sapphire Preferred",
             bank_name="Chase",
             category=OfferCategory.TRAVEL,
-            source="nerdwallet"
+            source="chase"
         ))
         offers.append(CreditCardOffer(
-            id="nerdwallet-amex-platinum",
-            title="Amex Platinum: 5x on Flights",
-            description="Earn 5x points on flights booked directly with airlines",
+            id="chase-sapphire-reserve",
+            title="Chase Sapphire Reserve: 3x on Travel & Dining",
+            description="Earn 3x points on travel and dining. Includes $550 annual dining credit and $300 travel credit",
+            card_name="Chase Sapphire Reserve",
+            bank_name="Chase",
+            category=OfferCategory.TRAVEL,
+            source="chase"
+        ))
+
+        # American Express cards
+        offers.append(CreditCardOffer(
+            id="amex-platinum",
+            title="Amex Platinum: 5x on Flights & Hotels",
+            description="Earn 5x points on flights booked directly with airlines and hotels through amextravel.com",
             card_name="American Express Platinum",
             bank_name="American Express",
             category=OfferCategory.TRAVEL,
-            source="nerdwallet"
+            source="amex"
         ))
+        offers.append(CreditCardOffer(
+            id="amex-gold",
+            title="Amex Gold: 4x on Restaurants & U.S. Supermarkets",
+            description="Earn 4x points at restaurants worldwide and U.S. supermarkets",
+            card_name="American Express Gold",
+            bank_name="American Express",
+            category=OfferCategory.DINING,
+            source="amex"
+        ))
+
+        # Capital One cards
+        offers.append(CreditCardOffer(
+            id="capital-one-venture",
+            title="Capital One Venture: 2x on All Purchases",
+            description="Earn 2x miles on all purchases with no foreign transaction fees",
+            card_name="Capital One Venture Rewards",
+            bank_name="Capital One",
+            category=OfferCategory.TRAVEL,
+            source="capital-one"
+        ))
+
+        # Citi cards
+        offers.append(CreditCardOffer(
+            id="citi-aadvantage",
+            title="Citi AAdvantage: 3x on American Airlines",
+            description="Earn 3x miles on American Airlines purchases and flights",
+            card_name="Citi AAdvantage Platinum Select",
+            bank_name="Citibank",
+            category=OfferCategory.TRAVEL,
+            source="citi"
+        ))
+
+        # Discover cards
+        offers.append(CreditCardOffer(
+            id="discover-it-cashback",
+            title="Discover it Cash Back: 5% Rotating Categories",
+            description="Earn 5% cash back in rotating categories each quarter, up to the quarterly maximum",
+            card_name="Discover it Cash Back",
+            bank_name="Discover",
+            category=OfferCategory.OTHER,
+            source="discover"
+        ))
+
         return offers
 
     def scrape_lounge_info(self) -> List[CreditCardBenefit]:
@@ -482,44 +537,235 @@ class TravelHacksScraper(BaseScraper):
     def scrape_travel_hacks(self) -> List[TravelHack]:
         """Scrape travel hacks"""
         hacks = []
-        # Sample hacks - in real implementation, scrape from sites
-        hacks.append(TravelHack(
-            id="hack-stopover-icelandair",
-            title="Free Stopover in Iceland",
-            description="Get a free stopover in Reykjavik when flying Icelandair transatlantic routes",
+
+        # Stopover programs
+        hacks.extend(self.scrape_stopover_programs())
+
+        # Travel hacks from various sources
+        hacks.extend(self.scrape_general_hacks())
+
+        return hacks
+
+    def scrape_stopover_programs(self) -> List[TravelHack]:
+        """Scrape stopover programs from airlines"""
+        stopovers = []
+
+        # Icelandair stopover
+        stopovers.append(TravelHack(
+            id="stopover-icelandair",
+            title="Icelandair Free Stopover",
+            description="Free stopover in Reykjavik (up to 7 nights) on transatlantic flights from North America to Europe",
             category="stopover",
-            source="secretflying",
-            url="https://www.secretflying.com/icelandair-stopover/",
-            tags=["icelandair", "stopover", "free"],
+            source="icelandair",
+            url="https://www.icelandair.com/en/information/stopover-in-iceland/",
+            tags=["icelandair", "stopover", "free", "reykjavik"],
             difficulty="easy",
             savings_potential="$500+",
             emoji="🗻"
         ))
+
+        # Emirates stopover
+        stopovers.append(TravelHack(
+            id="stopover-emirates",
+            title="Emirates Stopover Deals",
+            description="Stopover in Dubai for up to 96 hours on flights to/from certain destinations",
+            category="stopover",
+            source="emirates",
+            url="https://www.emirates.com/in/english/experience/stopover/",
+            tags=["emirates", "stopover", "dubai"],
+            difficulty="easy",
+            savings_potential="$300+",
+            emoji="🏝️"
+        ))
+
+        # Singapore Airlines stopover
+        stopovers.append(TravelHack(
+            id="stopover-singapore-airlines",
+            title="Singapore Airlines Stopover",
+            description="Free stopover in Singapore on flights between certain destinations",
+            category="stopover",
+            source="singapore-airlines",
+            url="https://www.singaporeair.com/en_UK/in/travel-info/special-assistance/stopover/",
+            tags=["singapore-airlines", "stopover", "singapore"],
+            difficulty="easy",
+            savings_potential="$400+",
+            emoji="🇸🇬"
+        ))
+
+        # Qatar Airways stopover
+        stopovers.append(TravelHack(
+            id="stopover-qatar-airways",
+            title="Qatar Airways Stopover",
+            description="Free stopover in Doha on flights connecting through Hamad International Airport",
+            category="stopover",
+            source="qatar-airways",
+            url="https://www.qatarairways.com/en/baggage/special-baggage/stopover.html",
+            tags=["qatar-airways", "stopover", "doha"],
+            difficulty="easy",
+            savings_potential="$350+",
+            emoji="🇶🇦"
+        ))
+
+        return stopovers
+
+    def scrape_general_hacks(self) -> List[TravelHack]:
+        """Scrape general travel hacks"""
+        hacks = []
+
         hacks.append(TravelHack(
             id="hack-error-fare",
             title="Book Error Fares",
-            description="Find and book airline error fares for huge savings",
+            description="Find and book airline error fares for huge savings on flight tickets",
             category="error_fare",
             source="secretflying",
             url="https://www.secretflying.com/error-fares/",
-            tags=["error fare", "cheap flights"],
+            tags=["error fare", "cheap flights", "booking"],
             difficulty="medium",
             savings_potential="Up to 90% off",
             emoji="💸"
         ))
+
         hacks.append(TravelHack(
             id="hack-credit-card-points",
             title="Maximize Credit Card Points",
-            description="Use the right credit card for each purchase category to maximize rewards",
+            description="Use the right credit card for each purchase category to maximize rewards and points",
             category="credit_card",
             source="thepointsguy",
             url="https://thepointsguy.com/guide/credit-cards/",
-            tags=["credit cards", "points", "rewards"],
+            tags=["credit cards", "points", "rewards", "saving"],
             difficulty="easy",
             savings_potential="$100-500/year",
             emoji="💳"
         ))
+
+        hacks.append(TravelHack(
+            id="hack-mixed-cabin",
+            title="Book Mixed Cabin Tickets",
+            description="Book separate tickets in different cabins to save money on premium economy or business",
+            category="booking_hack",
+            source="secretflying",
+            url="https://www.secretflying.com/mixed-cabin/",
+            tags=["mixed cabin", "business class", "saving"],
+            difficulty="medium",
+            savings_potential="$1000+",
+            emoji="✈️"
+        ))
+
+        hacks.append(TravelHack(
+            id="hack-city-pass",
+            title="Use City Tourist Passes",
+            description="Purchase city tourist passes that include transportation and attractions for big savings",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/TravelGuide",
+            tags=["city pass", "attractions", "transportation"],
+            difficulty="easy",
+            savings_potential="$50-200",
+            emoji="🎫"
+        ))
+
         return hacks
+
+
+class ActivitiesScraper(BaseScraper):
+    """Scraper for travel activities and experiences"""
+
+    def __init__(self):
+        super().__init__("Travel Activities", "https://www.tripadvisor.com")
+
+    def scrape_credit_cards(self) -> List[CreditCardOffer]:
+        return []
+
+    def scrape_lounge_info(self) -> List[CreditCardBenefit]:
+        return []
+
+    def scrape_pdfs(self) -> List[Dict]:
+        return []
+
+    def scrape_activities(self) -> List[TravelHack]:
+        """Scrape travel activities and experiences"""
+        activities = []
+
+        # Popular travel activities
+        activities.append(TravelHack(
+            id="activity-machu-picchu",
+            title="Machu Picchu Day Tour",
+            description="Explore the ancient Incan citadel with a guided tour including transportation from Cusco",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/AttractionProductReview-g294318-d1145277-Machu_Picchu_Day_Tour_from_Cusco-Cusco_Cusco_Region.html",
+            tags=["machu picchu", "peru", "guided tour", "historical"],
+            difficulty="medium",
+            savings_potential="$50-100",
+            emoji="🏔️"
+        ))
+
+        activities.append(TravelHack(
+            id="activity-taj-mahal",
+            title="Taj Mahal Sunrise Tour",
+            description="Experience the Taj Mahal at sunrise with skip-the-line access and private guide",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/Attractions-g304551-Activities-Agra_Uttar_Pradesh.html",
+            tags=["taj mahal", "india", "sunrise", "monument"],
+            difficulty="easy",
+            savings_potential="$30-60",
+            emoji="🕌"
+        ))
+
+        activities.append(TravelHack(
+            id="activity-grand-canyon",
+            title="Grand Canyon Helicopter Tour",
+            description="Aerial tour of the Grand Canyon with breathtaking views and photo opportunities",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/Attractions-g143028-Activities-Grand_Canyon_National_Park_Arizona.html",
+            tags=["grand canyon", "helicopter", "usa", "nature"],
+            difficulty="easy",
+            savings_potential="$100-200",
+            emoji="🏜️"
+        ))
+
+        activities.append(TravelHack(
+            id="activity-venice-gondola",
+            title="Venice Gondola Ride",
+            description="Traditional gondola ride through the canals of Venice with live music",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/Attractions-g187870-Activities-Venice_Veneto.html",
+            tags=["venice", "gondola", "italy", "romantic"],
+            difficulty="easy",
+            savings_potential="$40-80",
+            emoji="🚣"
+        ))
+
+        activities.append(TravelHack(
+            id="activity-niagara-falls",
+            title="Niagara Falls Boat Tour",
+            description="Maid of the Mist boat tour getting you close to the thundering waterfalls",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/Attractions-g154998-Activities-Niagara_Falls_Ontario.html",
+            tags=["niagara falls", "boat tour", "canada", "waterfall"],
+            difficulty="easy",
+            savings_potential="$30-60",
+            emoji="💧"
+        ))
+
+        activities.append(TravelHack(
+            id="activity-santorini-sunset",
+            title="Santorini Sunset Cruise",
+            description="Catamaran cruise watching the famous Santorini sunset with dinner and drinks",
+            category="activity",
+            source="tripadvisor",
+            url="https://www.tripadvisor.com/Attractions-g189400-Activities-Santorini_Cyclades_South_Aegean.html",
+            tags=["santorini", "sunset", "greece", "cruise"],
+            difficulty="easy",
+            savings_potential="$80-150",
+            emoji="🌅"
+        ))
+
+        return activities
 
 
 class ScraperManager:
@@ -531,7 +777,8 @@ class ScraperManager:
             'icici': ICICIScraper(),
             'sbi': SBIScraper(),
             'rewards': CreditCardRewardsScraper(),
-            'hacks': TravelHacksScraper()
+            'hacks': TravelHacksScraper(),
+            'activities': ActivitiesScraper()
         }
 
     def scrape_bank(self, bank_code: str) -> Dict:
@@ -550,6 +797,9 @@ class ScraperManager:
                 # Add travel hacks if the scraper has the method
                 if hasattr(scraper, 'scrape_travel_hacks'):
                     data['travel_hacks'] = scraper.scrape_travel_hacks()
+                # Add activities if the scraper has the method
+                if hasattr(scraper, 'scrape_activities'):
+                    data['activities'] = scraper.scrape_activities()
                 results[bank_code] = data
                 time.sleep(1)  # Be respectful to servers
             except Exception as e:

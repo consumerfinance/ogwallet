@@ -99,14 +99,15 @@ def main():
     # Initialize scraper manager
     sm = ScraperManager()
 
-    # Try to scrape data, but use sample data for demo
-    print("📊 Creating sample scraped data...")
-    results = create_sample_data()
+    # Scrape data from all sources
+    print("📊 Scraping data from all sources...")
+    results = sm.scrape_all_banks()
 
     # Print summary
     print("\n📈 Scraping Results:")
     total_offers = 0
     total_hacks = 0
+    total_activities = 0
 
     for bank, data in results.items():
         if data is None or 'error' in data:
@@ -114,11 +115,13 @@ def main():
         else:
             offers = len(data.get('offers', []))
             hacks = len(data.get('travel_hacks', []))
+            activities = len(data.get('activities', []))
             total_offers += offers
             total_hacks += hacks
-            print(f"✅ {bank}: {offers} offers, {hacks} hacks")
+            total_activities += activities
+            print(f"✅ {bank}: {offers} offers, {hacks} hacks, {activities} activities")
 
-    print(f"\n📊 Total: {total_offers} credit card offers, {total_hacks} travel hacks")
+    print(f"\n📊 Total: {total_offers} credit card offers, {total_hacks} travel hacks, {total_activities} activities")
 
     # Save to JSON file
     output_file = 'scraped_data.json'
@@ -139,14 +142,16 @@ def main():
     app_data = {
         "offers": [],
         "travel_hacks": [],
+        "activities": [],
         "last_updated": datetime.now().isoformat(),
         "version": "1.0.0"
     }
 
     for bank_data in results.values():
         if 'error' not in bank_data:
-            app_data["offers"].extend([offer.dict() for offer in bank_data.get('offers', [])])
-            app_data["travel_hacks"].extend([hack.dict() for hack in bank_data.get('travel_hacks', [])])
+            app_data["offers"].extend([offer.model_dump() for offer in bank_data.get('offers', [])])
+            app_data["travel_hacks"].extend([hack.model_dump() for hack in bank_data.get('travel_hacks', [])])
+            app_data["activities"].extend([activity.model_dump() for activity in bank_data.get('activities', [])])
 
     app_file = 'app_data.json'
     with open(app_file, 'w', encoding='utf-8') as f:
