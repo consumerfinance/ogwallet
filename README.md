@@ -2,7 +2,7 @@
 
 <div align="center">
   
-[![Latest stable release version](https://img.shields.io/github/v/release/consumnerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumerfinance/ogwallet/releases/latest)
+[![Latest stable release version](https://img.shields.io/github/v/release/consumerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumerfinance/ogwallet/releases/latest)
 [![Github downloads](https://img.shields.io/github/downloads/consumerfinance/ogwallet/total.svg?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumnerfinance/ogwallet/releases/)
 [![GitHub repo stars](https://img.shields.io/github/stars/consumerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](https://github.com/consumnerfinance/ogwallet/stargazers)
 [![Project's License](https://img.shields.io/github/license/consumerfinance/ogwallet?style=flat&labelColor=FF6200EE&color=FF6200EE)](./LICENCE)
